@@ -12,14 +12,12 @@
     <tbody>
         @forelse ($emiten as $item)
             <tr>
-                {{-- Menghitung nomor urut berdasarkan halaman paginasi saat ini --}}
                 <td>{{ ($emiten->currentPage() - 1) * $emiten->perPage() + $loop->iteration }}</td>
                 <td><strong>{{ $item['Kode'] }}</strong></td>
                 <td>{{ $item['Nama Perusahaan'] }}</td>
-                {{-- Data berikut tidak ada di file CSV, jadi kita tampilkan placeholder. --}}
-                <td><span class="text-muted">Data tidak tersedia</span></td>
-                <td><span class="text-muted">Data tidak tersedia</span></td>
-                <td><span class="text-muted">Data tidak tersedia</span></td>
+                <td>{{ $item['Tanggal Pencatatan'] ?? '-' }}</td>
+                <td>{{ $item['Saham'] ?? '-' }}</td>
+                <td>{{ $item['Papan Pencatatan'] ?? '-' }}</td>
             </tr>
         @empty
             <tr>

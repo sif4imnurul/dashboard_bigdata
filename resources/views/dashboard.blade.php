@@ -28,7 +28,7 @@
                                 <div class="news-card h-100">
                                     <div class="news-body">
                                         <div class="news-title">{{ $item['title'] }}</div>
-                                        <div class="news-date">{{ $item['original_date'] }}</div>
+                                        <div class="news-date">{{ \Carbon\Carbon::createFromFormat('l d/M/Y \a\t H:i', $item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i') }}</div>
                                         <div class="news-content">
                                             {{ $item['summary'] }}
                                         </div>

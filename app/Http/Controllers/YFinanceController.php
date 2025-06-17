@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class YFinanceController extends Controller
 {
@@ -15,28 +16,40 @@ class YFinanceController extends Controller
      */
     private function getEmitenData()
     {
-        $path = public_path('Daftar_Saham.csv');
+        $path = public_path('Daftar_Saham.xlsx');
         if (!file_exists($path)) {
             return collect(); // Kembalikan koleksi kosong jika file tidak ada
         }
 
-        $file = fopen($path, 'r');
-        $data = [];
-        
-        // Lewati baris header
-        $header = fgetcsv($file); 
+        // Baca file XLSX menggunakan PhpSpreadsheet
+        $spreadsheet = IOFactory::load($path);
+        $worksheet = $spreadsheet->getActiveSheet();
 
-        while (($row = fgetcsv($file)) !== false) {
-            // Pastikan baris memiliki 2 kolom untuk menghindari error
-            if (count($row) == 2 && !empty($row[0]) && !empty($row[1])) {
+        $data = [];
+        foreach ($worksheet->getRowIterator() as $rowIndex => $row) {
+            // Lewati baris header (baris pertama)
+            if ($rowIndex === 1) continue;
+
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(false);
+
+            $rowData = [];
+            foreach ($cellIterator as $cell) {
+                $rowData[] = trim($cell->getValue());
+            }
+
+            // Pastikan kolom Kode dan Nama Perusahaan ada
+            if (count($rowData) >= 3 && !empty($rowData[1]) && !empty($rowData[2])) {
                 $data[] = [
-                    'Kode' => trim($row[0]),
-                    'Nama Perusahaan' => trim($row[1])
+                    'Kode' => $rowData[1],
+                    'Nama Perusahaan' => $rowData[2],
+                    'Tanggal Pencatatan' => $rowData[3] ?? null,
+                    'Saham' => $rowData[4] ?? null,
+                    'Papan Pencatatan' => $rowData[5] ?? null,
                 ];
             }
         }
 
-        fclose($file);
         return new Collection($data);
     }
 
