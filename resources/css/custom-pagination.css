@@ -55,9 +55,9 @@
 
 /* Active page */
 .custom-pagination .page-item.active .page-link {
-    background: #1F2937; /* Warna hitam solid (abu-abu gelap) */
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Bayangan disesuaikan agar netral */
+    background: #1F2937; 
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
 }
 
 /* Disabled state */
@@ -216,21 +216,35 @@
 
 }
 
-/* News Card Styles */
+
+/* News Grid Container - True Masonry Style */
+#newsContainer {
+    column-count: 3;
+    column-gap: 1.5rem;
+    column-fill: balance;
+}
+
+/* News Card Styles - Masonry Layout */
+.news-item-dynamic {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
+}
+
 .news-card-wrapper {
-    cursor: pointer;
-    height: 100%;
+    break-inside: avoid;
 }
 
 .news-card {
     background-color: white;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    height: 100%;
     transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
     padding: 1.25rem;
+    height: fit-content;
+    display: block;
+    width: 100%;
 }
 
 .news-card:hover {
@@ -240,9 +254,7 @@
 }
 
 .news-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: block; /* Ubah dari flex */
 }
 
 .news-title {
@@ -251,6 +263,10 @@
     color: #1f2937;
     margin-bottom: 0.5rem;
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Maksimal 3 baris untuk title */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .news-date {
@@ -263,55 +279,55 @@
     font-size: 0.875rem;
     color: #4b5563;
     line-height: 1.5;
-    margin-bottom: 1rem;
-    flex: 1;
+    /* Hapus margin-bottom karena tidak ada read-more lagi */
 }
 
-.news-read-more {
-    font-size: 0.8rem;
-    color: #6b7280;
-    font-weight: 500;
-    text-align: right;
+/* Responsive untuk mobile */
+@media (max-width: 768px) {
+    #newsContainer {
+        column-count: 1;
+        column-gap: 1rem;
+    }
+    
+    .news-item-dynamic {
+        margin-bottom: 1rem;
+    }
 }
 
-/* Modal Styles */
-.news-modal-content {
-    line-height: 1.8;
-    white-space: pre-line;
+@media (min-width: 769px) and (max-width: 992px) {
+    #newsContainer {
+        column-count: 2;
+    }
 }
 
-.modal-title {
-    font-weight: 600;
+@media (min-width: 1200px) {
+    #newsContainer {
+        column-count: 4;
+    }
 }
 
-/* Search Bar Styles */
-.search-container {
-    margin-bottom: 1.5rem;
+/* Alternative: Masonry dengan CSS Columns (jika mau style Pinterest) */
+.masonry-container {
+    column-count: 3;
+    column-gap: 1.5rem;
+    column-fill: balance;
 }
 
-.search-bar {
-    position: relative;
-    max-width: 500px;
-}
-
-.search-bar i {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6b7280;
-}
-
-.search-bar input {
+.masonry-container .news-card-wrapper {
+    display: inline-block;
     width: 100%;
-    padding: 0.5rem 1rem 0.5rem 2.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
 }
 
-.search-bar input:focus {
-    outline: none;
-    border-color: #6b7280;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+@media (max-width: 992px) {
+    .masonry-container {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 576px) {
+    .masonry-container {
+        column-count: 1;
+    }
 }

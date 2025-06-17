@@ -46,7 +46,7 @@ class NewsController extends Controller
             // Biarkan data kosong jika API error
         }
 
-        $perPage = 9;
+        $perPage = 30;
         $currentPage = $request->input('page', 1);
         $collection = new Collection($allNewsData);
 

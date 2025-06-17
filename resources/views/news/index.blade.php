@@ -15,8 +15,8 @@
             Semua Berita Saham
         </div>
 
-        {{-- News Grid --}}
-        <div class="row g-4 mt-3" id="newsContainer">
+        {{-- News Grid - Hapus row g-4 untuk layout dinamis --}}
+        <div class="mt-3" id="newsContainer">
             @include('news.news_items', ['news' => $news])
         </div>
 
