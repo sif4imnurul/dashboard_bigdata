@@ -50,12 +50,27 @@ class NewsController extends Controller
         $currentPage = $request->input('page', 1);
         $collection = new Collection($allNewsData);
 
+        // Apply search filter if search query exists
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = strtolower($request->search);
+            $collection = $collection->filter(function ($item) use ($searchTerm) {
+                return str_contains(strtolower($item['title']), $searchTerm); 
+            });
+        }
+
         $currentPageItems = $collection->slice(($currentPage - 1) * $perPage, $perPage)->all();
         
-        $paginatedItems= new LengthAwarePaginator($currentPageItems, count($collection), $perPage, $currentPage, [
+        $paginatedItems = new LengthAwarePaginator($currentPageItems, count($collection), $perPage, $currentPage, [
             'path' => $request->url(),
             'query' => $request->query(),
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'newsHtml' => view('news.news_items', ['news' => $paginatedItems])->render(),
+                'paginationHtml' => $paginatedItems->links('layouts.pagination')->toHtml()
+            ]);
+        }
 
         return view('news.index', ['news' => $paginatedItems]);
     }

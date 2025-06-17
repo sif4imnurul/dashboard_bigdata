@@ -11,3 +11,4 @@ Route::get('/', [NewsController::class, 'index']);
 
 // berita 
 Route::get('/berita', [NewsController::class, 'showAllNews'])->name('news.index');
+Route::get('/berita/search', [NewsController::class, 'showAllNews'])->name('news.search');
