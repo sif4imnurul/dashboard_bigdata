@@ -306,6 +306,11 @@ body {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.3s;
+
+    /* --- TAMBAHAN --- */
+    width: 130px; /* Beri lebar tetap agar ukuran tidak berubah-ubah */
+    text-align: center; /* Posisikan teks di tengah */
+    white-space: normal; /* Izinkan teks untuk turun baris jika perlu */
 }
 .tooltip-date {
     font-size: 11px;

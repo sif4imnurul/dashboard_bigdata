@@ -29,8 +29,8 @@
 
         <div class="news-card-wrapper">
             <a href="/berita" class="news-card d-flex flex-column justify-content-center align-items-center text-decoration-none" style="height: 100%;">
-                <i class="bi bi-arrow-right-circle-fill" style="font-size: 2rem; color: #0d6efd;"></i>
-                <div class="news-title mt-2" style="color: #0d6efd;">Lihat Semua Berita</div>
+                <i class="bi bi-arrow-right-circle-fill" style="font-size: 2rem; color: #00c176;"></i>
+                <div class="news-title mt-2" style="color: #00c176;">Lihat Semua Berita</div>
             </a>
         </div>
         </div>

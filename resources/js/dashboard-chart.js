@@ -100,12 +100,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function externalTooltipHandler(context) {
         const tooltipEl = document.getElementById('chartTooltip');
         const tooltipModel = context.tooltip;
+        const chart = context.chart;
 
+        // Sembunyikan tooltip jika tidak ada interaksi
         if (tooltipModel.opacity === 0) {
             tooltipEl.style.opacity = 0;
             return;
         }
-        
+
+        // Atur konten teks di dalam tooltip
         if (tooltipModel.body) {
             const titleLines = tooltipModel.title || [];
             const bodyLines = tooltipModel.body.map(b => b.lines);
@@ -113,12 +116,28 @@ document.addEventListener('DOMContentLoaded', function() {
             tooltipEl.querySelector('.tooltip-date').textContent = titleLines[0];
             tooltipEl.querySelector('.tooltip-value').textContent = bodyLines[0];
         }
+
+        // === LOGIKA POSISI YANG DISEMPURNAKAN ===
+        const chartWidth = chart.width;
+        const tooltipWidth = tooltipEl.offsetWidth;
         
-        const position = context.chart.canvas.getBoundingClientRect();
+        // Default posisi tooltip adalah di kanan kursor
+        let transformX = '15%'; 
+
+        // Jika posisi kursor + lebar tooltip melebihi lebar grafik,
+        // pindahkan tooltip ke kiri kursor agar tidak terpotong.
+        if (tooltipModel.caretX + tooltipWidth > chartWidth) {
+            transformX = '-115%'; // Geser ke kiri
+        }
+        // === AKHIR LOGIKA BARU ===
+
+        // Tampilkan dan posisikan tooltip
         tooltipEl.style.opacity = 1;
-        tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
-        tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
-        tooltipEl.style.transform = 'translate(-50%, -120%)'; // Disesuaikan agar tidak menutupi titik hover
+        tooltipEl.style.left = tooltipModel.caretX + 'px';
+        tooltipEl.style.top = tooltipModel.caretY + 'px';
+        
+        // Gunakan transform yang sudah dinamis dan posisikan sedikit lebih jauh dari titik
+        tooltipEl.style.transform = `translate(${transformX}, -125%)`;
     }
     
     // Kumpulan fungsi untuk menghasilkan data dummy
