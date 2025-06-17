@@ -8,7 +8,6 @@
     {{-- Memuat library eksternal (CDN) --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
     {{-- Chart.js dimuat di sini agar tersedia secara global untuk script kita --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -25,7 +24,7 @@
                     <i class="bi bi-house"></i>
                     <span>Home</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="{{ route('news.index') }}" class="menu-item">
                     <i class="bi bi-newspaper"></i>
                     <span>Berita</span>
                 </a>

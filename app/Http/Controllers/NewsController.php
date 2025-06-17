@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http; // <-- Import Http Client
+use Illuminate\Support\Facades\Http; 
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class NewsController extends Controller
 {
@@ -29,5 +31,32 @@ class NewsController extends Controller
         }
 
         return view('dashboard', ['news' => $newsData]);
+    }
+
+    public function showAllNews(Request $request)
+    {
+        $allNewsData = [];
+
+        try {
+            $response = Http::get('http://localhost:5000/api/iqplus/news');
+            if ($response->successful()) {
+                $allNewsData = $response->json()['data'] ?? [];
+            }
+        } catch (\Exception $e) {
+            // Biarkan data kosong jika API error
+        }
+
+        $perPage = 9;
+        $currentPage = $request->input('page', 1);
+        $collection = new Collection($allNewsData);
+
+        $currentPageItems = $collection->slice(($currentPage - 1) * $perPage, $perPage)->all();
+        
+        $paginatedItems= new LengthAwarePaginator($currentPageItems, count($collection), $perPage, $currentPage, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        return view('news.index', ['news' => $paginatedItems]);
     }
 }

@@ -8,3 +8,6 @@ use App\Http\Controllers\NewsController;
 // });
 
 Route::get('/', [NewsController::class, 'index']);
+
+// berita 
+Route::get('/berita', [NewsController::class, 'showAllNews'])->name('news.index');
