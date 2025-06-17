@@ -95,11 +95,31 @@
                 </div>
                 
                 <div class="details-container">
-                    <div class="market-cap-badge">
-                        <div class="market-cap-icon"></div>
-                        <div>
-                            <div class="market-cap-label">Market Cap</div>
-                            <div class="market-cap-value">$40.3 T</div>
+                    {{-- BUAT WRAPPER BARU UNTUK MENYEJAJARKAN ITEM --}}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        
+                        {{-- 1. Badge Market Cap (tambahkan class mb-0) --}}
+                        <div class="market-cap-badge mb-0">
+                            <div class="market-cap-icon">
+                                <i class="bi bi-bar-chart-fill"></i>
+                            </div>
+                            <div>
+                                <div class="market-cap-label">Market Cap</div>
+                                <div class="market-cap-value">$40.3 T</div>
+                            </div>
+                        </div>
+
+                        {{-- 2. Dropdown rentang waktu yang baru --}}
+                        <div class="dropdown">
+                        <button class="btn range-dropdown-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            24 h
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">24 h</a></li>
+                            <li><a class="dropdown-item" href="#">7 d</a></li>
+                            <li><a class="dropdown-item" href="#">1 m</a></li>
+                            <li><a class="dropdown-item" href="#">1 y</a></li>
+                        </ul>
                         </div>
                     </div>
                     
@@ -109,10 +129,6 @@
                             <td>
                                 <div class="d-flex align-items-center justify-content-end">
                                     <div>4,566.48</div>
-                                    <div class="time-badge ms-2">
-                                        <i class="bi bi-clock"></i>
-                                        24 h
-                                    </div>
                                 </div>
                             </td>
                         </tr>
