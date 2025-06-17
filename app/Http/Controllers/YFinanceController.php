@@ -75,7 +75,7 @@ class YFinanceController extends Controller
 
         // Jika ini adalah request AJAX, kirim kembali hanya partial HTML
         if ($request->ajax()) {
-            $tableHtml = view('yfinance._table_data', ['emiten' => $paginatedItems])->render();
+            $tableHtml = view('yfinance.table_data', ['emiten' => $paginatedItems])->render();
             $paginationHtml = $paginatedItems->links('layouts.pagination')->toHtml();
 
             return response()->json(['tableHtml' => $tableHtml, 'paginationHtml' => $paginationHtml]);

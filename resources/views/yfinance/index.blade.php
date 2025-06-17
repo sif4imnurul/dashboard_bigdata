@@ -18,7 +18,7 @@
         {{-- Container untuk tabel agar mudah di-update via AJAX --}}
         <div class="table-responsive mt-3" id="emitenTableContainer">
             {{-- Memuat partial view untuk tabel saat halaman pertama kali dibuka --}}
-            @include('yfinance._table_data', ['emiten' => $emiten])
+            @include('yfinance.table_data', ['emiten' => $emiten])
         </div>
 
         {{-- Container untuk Pagination --}}
@@ -28,7 +28,6 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
 $(document).ready(function() {
     let searchTimeout;
@@ -76,5 +75,4 @@ $(document).ready(function() {
     });
 });
 </script>
-@endpush
 @endsection
