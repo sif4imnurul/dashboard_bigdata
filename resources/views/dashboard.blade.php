@@ -11,28 +11,47 @@
     
     <div class="content-section">
         <div class="section-title">Berita Saham</div>
-        
-        <div class="row g-3 horizontal-scroll-row"> 
-        @forelse ($news as $item)
-            <div class="news-card-wrapper"> 
-                <div class="news-card">
-                    <div class="news-title">{{ $item['title'] }}</div>
-                    <div class="news-date">{{ $item['original_date'] }}</div>
-                    <div class="news-content">
-                        {{ $item['summary'] }}
-                    </div>
+
+        {{-- 
+            PENDEKATAN TERAKHIR:
+            1. Wadah luar `.d-flex` akan membuat area berita dan area tombol sama tinggi (default align-items: stretch).
+            2. Area tombol (`.ps-4`) kita jadikan flex container juga untuk menengahkan tombol di dalamnya.
+        --}}
+        <div class="d-flex">
+
+            {{-- 1. Area untuk kartu berita yang bisa di-scroll --}}
+            <div class="flex-grow-1" style="overflow: hidden;">
+                <div class="row g-3 horizontal-scroll-row">
+                    @forelse ($news as $item)
+                        <div class="news-card-wrapper">
+                            <a href="{{ route('news.index') }}" class="text-decoration-none">
+                                <div class="news-card h-100">
+                                    <div class="news-body">
+                                        <div class="news-title">{{ $item['title'] }}</div>
+                                        <div class="news-date">{{ $item['original_date'] }}</div>
+                                        <div class="news-content">
+                                            {{ $item['summary'] }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    @empty
+                        <div class="col">
+                            <p>Tidak ada berita yang tersedia saat ini.</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
-        @empty
-            <p>Tidak ada berita yang tersedia saat ini.</p>
-        @endforelse
 
-        <div class="news-card-wrapper">
-            <a href="/berita" class="news-card d-flex flex-column justify-content-center align-items-center text-decoration-none" style="height: 100%;">
-                <i class="bi bi-arrow-right-circle-fill" style="font-size: 2rem; color: #00c176;"></i>
-                <div class="news-title mt-2" style="color: #00c176;">Lihat Semua Berita</div>
-            </a>
-        </div>
+            {{-- 2. Area untuk tombol "Lihat Semua" --}}
+            {{-- Wadah ini akan meregang tingginya, dan menengahkan tombol di dalamnya --}}
+            <div class="ps-4 d-flex align-items-center">
+                <a href="{{ route('news.index') }}" class="btn btn-light rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
         </div>
     </div>
     

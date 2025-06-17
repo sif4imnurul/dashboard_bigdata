@@ -23,7 +23,7 @@ class NewsController extends Controller
             if ($response->successful()) {
                 $allData = $response->json()['data'] ?? [];
                 // Ambil maksimal 5 item berita
-                $newsData = array_slice($allData, 0, 5);
+                $newsData = array_slice($allData, 0, 10);
             }
         } catch (\Exception $e) {
             // Logging jika diperlukan
