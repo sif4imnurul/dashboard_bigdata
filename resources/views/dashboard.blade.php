@@ -13,19 +13,26 @@
         <div class="section-title">Berita Saham</div>
         
         <div class="row g-3 horizontal-scroll-row"> 
-            @forelse ($news as $item)
-                <div class="news-card-wrapper"> 
-                    <div class="news-card">
-                        <div class="news-title">{{ $item['title'] }}</div>
-                        <div class="news-date">{{ $item['original_date'] }}</div>
-                        <div class="news-content">
-                            {{ $item['summary'] }}
-                        </div>
+        @forelse ($news as $item)
+            <div class="news-card-wrapper"> 
+                <div class="news-card">
+                    <div class="news-title">{{ $item['title'] }}</div>
+                    <div class="news-date">{{ $item['original_date'] }}</div>
+                    <div class="news-content">
+                        {{ $item['summary'] }}
                     </div>
                 </div>
-            @empty
-                <p>Tidak ada berita yang tersedia saat ini.</p>
-            @endforelse
+            </div>
+        @empty
+            <p>Tidak ada berita yang tersedia saat ini.</p>
+        @endforelse
+
+        <div class="news-card-wrapper">
+            <a href="/berita" class="news-card d-flex flex-column justify-content-center align-items-center text-decoration-none" style="height: 100%;">
+                <i class="bi bi-arrow-right-circle-fill" style="font-size: 2rem; color: #0d6efd;"></i>
+                <div class="news-title mt-2" style="color: #0d6efd;">Lihat Semua Berita</div>
+            </a>
+        </div>
         </div>
     </div>
     

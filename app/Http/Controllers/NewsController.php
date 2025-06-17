@@ -18,19 +18,16 @@ class NewsController extends Controller
             // Lakukan panggilan GET ke API Anda
             $response = Http::get('http://localhost:5000/api/iqplus/news');
 
-            // Cek jika request berhasil (status code 2xx)
             if ($response->successful()) {
-                // Ambil bagian 'data' dari JSON response
-                $newsData = $response->json()['data'] ?? [];
+                $allData = $response->json()['data'] ?? [];
+                // Ambil maksimal 5 item berita
+                $newsData = array_slice($allData, 0, 5);
             }
         } catch (\Exception $e) {
-            // Jika API gagal dihubungi (misal: server API mati),
-            // biarkan $newsData tetap kosong agar halaman tidak error.
-            // Anda bisa juga menambahkan logging di sini:
+            // Logging jika diperlukan
             // Log::error("Gagal mengambil berita dari API: " . $e->getMessage());
         }
-        
-        // Kirim data berita ke view 'dashboard'
+
         return view('dashboard', ['news' => $newsData]);
     }
 }
