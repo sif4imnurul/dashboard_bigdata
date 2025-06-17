@@ -20,7 +20,7 @@
         <div class="d-flex">
 
             {{-- 1. Area untuk kartu berita yang bisa di-scroll --}}
-            <div class="flex-grow-1" style="overflow: hidden;">
+            <div class="flex-grow-1" style="overflow: hidden; padding-top: 5px; padding-bottom: 5px;">
                 <div class="row g-3 horizontal-scroll-row">
                     @forelse ($news as $item)
                         <div class="news-card-wrapper">
