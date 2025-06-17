@@ -19,80 +19,30 @@
     <div class="dashboard-container">
         <div class="row g-0">
             
+            {{-- Sidebar dengan ikon yang sudah diperbaiki --}}
             <div class="col-md-2 sidebar">
-                <div class="logo-circle">TP</div>
-                
-                <div class="section-label">AI WATCHLIST</div>
-                {{-- ... item watchlist ... --}}
-                <div class="watchlist-item">
-                    <div class="d-flex align-items-center">
-                        <div class="stock-symbol me-2">S&P</div>
-                        <div>
-                            <div class="stock-name">S&P 500</div>
-                            <div class="d-flex align-items-center">
-                                <div class="stock-price me-2">4,566.78</div>
-                                <div class="stock-change">+0.30%</div>
-                            </div>
-                            <div class="stock-change">+13.62</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="watchlist-item">
-                    <div class="d-flex align-items-center">
-                        <div class="stock-symbol me-2">S&P</div>
-                        <div>
-                            <div class="stock-name">S&P 500</div>
-                            <div class="d-flex align-items-center">
-                                <div class="stock-price me-2">4,566.78</div>
-                                <div class="stock-change">+0.30%</div>
-                            </div>
-                            <div class="stock-change">+13.62</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="section-label">MAIN MENU</div>
-                <a href="#" class="menu-item">
+                <a href="/" class="menu-item">
                     <i class="bi bi-house"></i>
                     <span>Home</span>
                 </a>
                 <a href="#" class="menu-item">
-                    <i class="bi bi-arrow-left-right"></i>
-                    <span>Exchange</span>
+                    <i class="bi bi-newspaper"></i>
+                    <span>Berita</span>
                 </a>
-                
-                {{-- MODIFIKASI: Tambahkan class "has-submenu" --}}
-                <a href="#" class="menu-item active has-submenu">
-                    <i class="bi bi-graph-up"></i>
-                    <span>Stock & Fund</span>
-                    <i class="bi bi-chevron-down chevron"></i>
-                </a>
-                {{-- MODIFIKASI: Tambahkan class "show" agar awalnya terbuka karena menu-item-nya active --}}
-                <div class="submenu show">
-                    <a href="#" class="menu-item">Stock/ETF</a>
-                    <a href="#" class="menu-item active">Index</a>
-                    <a href="#" class="menu-item">Currency</a>
-                    <a href="#" class="menu-item">Mutual Fund</a>
-                </div>
-
-                {{-- MODIFIKASI: Tambahkan class "has-submenu" --}}
-                <a href="#" class="menu-item has-submenu">
-                    <i class="bi bi-wallet2"></i>
-                    <span>Wallets</span>
-                    <i class="bi bi-chevron-down chevron"></i>
-                </a>
-                {{-- Submenu ini awalnya akan tersembunyi --}}
-                <div class="submenu">
-                    <a href="#" class="menu-item">Wallet 1</a>
-                    <a href="#" class="menu-item">Wallet 2</a>
-                </div>
-
                 <a href="#" class="menu-item">
-                    <i class="bi bi-currency-bitcoin"></i>
-                    <span>Crypto</span>
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Grafik Saham</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="bi bi-search"></i>
+                    <span>Detail Saham</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="bi bi-buildings"></i>
+                    <span>Daftar Emiten</span>
                 </a>
                 
-                <div class="section-label">SUPPORT</div>
+                {{-- <div class="section-label">SUPPORT</div>
                 <a href="#" class="menu-item">
                     <i class="bi bi-people"></i>
                     <span>Community</span>
@@ -100,7 +50,7 @@
                 <a href="#" class="menu-item">
                     <i class="bi bi-question-circle"></i>
                     <span>Help & Support</span>
-                </a>
+                </a> --}}
             </div>
             
             @yield('content')
