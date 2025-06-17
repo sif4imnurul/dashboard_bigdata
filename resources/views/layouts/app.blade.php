@@ -18,41 +18,29 @@
 <body>
     <div class="dashboard-container">
         <div class="row g-0">
-            
             {{-- Sidebar dengan ikon yang sudah diperbaiki --}}
             <div class="col-md-2 sidebar">
-                <a href="/" class="menu-item">
+                <a href="/" class="menu-item {{ request()->is('/') ? 'active' : '' }}">
                     <i class="bi bi-house"></i>
                     <span>Home</span>
                 </a>
-                <a href="{{ route('news.index') }}" class="menu-item">
+                <a href="{{ route('news.index') }}" class="menu-item {{ request()->routeIs('news.*') ? 'active' : '' }}">
                     <i class="bi bi-newspaper"></i>
                     <span>Berita</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item {{ request()->routeIs('grafik.*') ? 'active' : '' }}">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Grafik Saham</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item {{ request()->routeIs('detail.*') ? 'active' : '' }}">
                     <i class="bi bi-search"></i>
                     <span>Detail Saham</span>
                 </a>
-                <a href="{{ route('emiten.index') }}" class="menu-item">
+                <a href="{{ route('emiten.index') }}" class="menu-item {{ request()->routeIs('emiten.*') ? 'active' : '' }}">
                     <i class="bi bi-buildings"></i>
                     <span>Daftar Emiten</span>
                 </a>
-                
-                {{-- <div class="section-label">SUPPORT</div>
-                <a href="#" class="menu-item">
-                    <i class="bi bi-people"></i>
-                    <span>Community</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="bi bi-question-circle"></i>
-                    <span>Help & Support</span>
-                </a> --}}
-            </div>
-            
+            </div>    
             @yield('content')
 
         </div>
