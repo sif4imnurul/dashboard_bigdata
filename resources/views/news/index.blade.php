@@ -12,7 +12,7 @@
 
     <div class="content-section">
         <div class="section-title">
-            Semua Berita Saham
+            Berita Saham
         </div>
 
         {{-- News Grid - Hapus row g-4 untuk layout dinamis --}}

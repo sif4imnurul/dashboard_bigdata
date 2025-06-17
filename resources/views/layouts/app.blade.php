@@ -37,7 +37,7 @@
                     <i class="bi bi-search"></i>
                     <span>Detail Saham</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="{{ route('emiten.index') }}" class="menu-item">
                     <i class="bi bi-buildings"></i>
                     <span>Daftar Emiten</span>
                 </a>
