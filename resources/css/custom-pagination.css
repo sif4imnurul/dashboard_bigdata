@@ -1,5 +1,123 @@
-/* pagination */
-/* Custom Pagination Styles */
+/* General & Layout Styling (idx related) */
+/* -------------------------------------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.main-content {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.header-section {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 25px;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Search Bar Styling */
+.search-bar {
+    position: relative;
+    width: 300px; /* Adjust as needed */
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 15px 10px 40px; /* Increased left padding for icon */
+    border: 1px solid #ddd;
+    border-radius: 20px; /* More rounded */
+    font-size: 0.95rem;
+    box-shadow: none; /* Remove default focus shadow */
+    transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.search-bar .bi-search {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1rem;
+}
+
+/* Filters Styling */
+.filters .form-select {
+    border-radius: 8px;
+    font-size: 0.95rem;
+    height: calc(1.5em + 0.75rem + 2px); /* Align with search input height */
+}
+
+/* Report Card Styling */
+.card {
+    border-radius: 10px;
+    overflow: hidden; /* Ensures no content spills out */
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.card-subtitle {
+    font-size: 0.9rem;
+    color: #6c757d !important; /* Ensure muted color is applied */
+    margin-bottom: 15px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.9rem;
+}
+
+.info-row:last-of-type {
+    border-bottom: none; /* No dashed line for the last info row */
+}
+
+.info-label {
+    font-weight: 500;
+    color: #555;
+    flex-basis: 45%; /* Distribute space */
+}
+
+.info-value {
+    text-align: right;
+    color: #333;
+    flex-basis: 55%; /* Distribute space */
+}
+
+.card-footer {
+    background-color: #f4f7f6 !important; /* Light background for footer */
+    border-top: 1px solid #eee;
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+
+/* Pagination Styles */
+/* ----------------- */
 .pagination-wrapper {
     display: flex;
     justify-content: center;
@@ -8,7 +126,7 @@
     gap: 0.5rem;
 }
 
-/* Style untuk pagination container */
+/* Style for pagination container */
 .custom-pagination {
     display: flex;
     align-items: center;
@@ -22,7 +140,7 @@
     padding: 0.5rem;
 }
 
-/* Style untuk setiap item pagination */
+/* Style for each pagination item */
 .custom-pagination .page-item {
     margin: 0;
 }
@@ -55,9 +173,9 @@
 
 /* Active page */
 .custom-pagination .page-item.active .page-link {
-    background: #1F2937; 
+    background: #1F2937;
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Disabled state */
@@ -190,33 +308,32 @@
     font-weight: 500;
 }
 
-/* Responsive */
+/* Responsive Pagination */
 @media (max-width: 768px) {
     .pagination-wrapper {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .custom-pagination .page-link {
         width: 36px;
         height: 36px;
         font-size: 13px;
     }
-    
+
     /* Hide some page numbers on mobile */
     .custom-pagination .page-item:not(.active):not(:first-child):not(:last-child):not(.disabled) {
         display: none;
     }
-    
+
     .custom-pagination .page-item:nth-child(2),
     .custom-pagination .page-item:nth-last-child(2) {
         display: block;
     }
-
-
 }
 
-/* SIDEBAR */
+/* Sidebar Styles */
+/* -------------- */
 .menu-item {
     display: block;
     padding: 12px 16px;
@@ -249,7 +366,8 @@
     border-left: 3px solid #ddd;
 }
 
-
+/* News Grid & Card Styles */
+/* ----------------------- */
 /* News Grid Container - Max 3 Columns */
 #newsContainer {
     column-count: 1;
@@ -259,7 +377,6 @@
 }
 
 /* News Card Styles - Masonry Layout */
-/* News Card Styles - Tetap rapi */
 .news-item-dynamic {
     display: inline-block;
     width: 100%;
@@ -277,7 +394,7 @@
     width: 100%;
     box-sizing: border-box;
     height: auto;
-    min-height: 200px; /* opsional biar rata */
+    min-height: 200px; /* optional biar rata */
 }
 
 .news-card:hover {
@@ -285,6 +402,7 @@
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
     border-color: #94a3b8;
 }
+
 .news-card-wrapper {
     break-inside: avoid;
 }
@@ -318,8 +436,7 @@
     /* Hapus margin-bottom karena tidak ada read-more lagi */
 }
 
-/* Responsive untuk mobile */
-
+/* Responsive News Grid */
 @media (min-width: 769px) and (max-width: 992px) {
     #newsContainer {
         column-count: 2;
@@ -338,7 +455,7 @@
     }
 }
 
-/* Alternative: Masonry dengan CSS Columns (jika mau style Pinterest) */
+/* Alternative: Masonry with CSS Columns (if you want Pinterest style) */
 .masonry-container {
     column-count: 3;
     column-gap: 1.5rem;
@@ -364,6 +481,8 @@
     }
 }
 
+/* Table Hover Effect */
+/* ------------------ */
 .table-hover tbody tr:hover {
     background-color: rgba(13, 110, 253, 0.1);
     cursor: pointer;

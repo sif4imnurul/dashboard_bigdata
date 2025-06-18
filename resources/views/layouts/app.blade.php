@@ -32,7 +32,7 @@
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Grafik Saham</span>
                 </a>
-                <a href="{{ route('idx.detail') }}" class="menu-item {{ request()->routeIs('idx.detail') ? 'active' : '' }}">
+                <a href="{{ route('financial_reports.index') }}" class="menu-item {{ request()->routeIs('idx.detail') ? 'active' : '' }}">
                     <i class="bi bi-file-earmark-text"></i>
                     <span>Laporan Keuangan</span>
                 </a>
