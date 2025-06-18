@@ -28,10 +28,10 @@
                     <i class="bi bi-newspaper"></i>
                     <span>Berita</span>
                 </a>
-                <a href="{{ route('grafik.index') }}" class="menu-item {{ request()->routeIs('grafik.*') ? 'active' : '' }}">
+                {{-- <a href="{{ route('grafik.index') }}" class="menu-item {{ request()->routeIs('grafik.*') ? 'active' : '' }}">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Grafik Saham</span>
-                </a>
+                </a> --}}
                 <a href="{{ route('financial_reports.index') }}" class="menu-item {{ request()->routeIs('idx.detail') ? 'active' : '' }}">
                     <i class="bi bi-file-earmark-text"></i>
                     <span>Laporan Keuangan</span>

@@ -5,53 +5,64 @@
     <div class="search-container">
         <div class="search-bar">
             <i class="bi bi-search"></i>
-            <input type="text" placeholder="Cari saham & lainnya">
+            {{-- Form pencarian saham dengan real-time search --}}
+            <div class="w-100 d-flex position-relative">
+                <input type="text" 
+                       id="stockSearchInput"
+                       name="stock_code" 
+                       placeholder="Cari saham, contoh: BBRI" 
+                       value="{{ $searchStockCode ?? '' }}" 
+                       class="form-control border-0 bg-transparent"
+                       autocomplete="off">
+                <div id="searchSpinner" class="position-absolute end-0 top-50 translate-middle-y me-3" style="display: none;">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
+    {{-- Alert untuk menampilkan error --}}
+    <div id="searchAlert" class="alert alert-danger mt-3" role="alert" style="display: none;"></div>
+
     <div class="content-section">
         <div class="section-title">Berita Saham</div>
 
-        {{-- 
-            PENDEKATAN TERAKHIR:
-            1. Wadah luar `.d-flex` akan membuat area berita dan area tombol sama tinggi (default align-items: stretch).
-            2. Area tombol (`.ps-4`) kita jadikan flex container juga untuk menengahkan tombol di dalamnya.
-        --}}
         <div class="d-flex">
-
-            {{-- 1. Area untuk kartu berita yang bisa di-scroll --}}
+            {{-- Area untuk kartu berita yang bisa di-scroll --}}
             <div class="flex-grow-1" style="overflow: hidden; padding-top: 5px; padding-bottom: 5px;">
-                <div class="row g-3 horizontal-scroll-row">
+                <div id="newsContainer" class="row g-3 horizontal-scroll-row">
                     @forelse ($news as $item)
                         <div class="news-card-wrapper">
-                            <a href="{{ route('news.index') }}" class="text-decoration-none">
-                                <div class="news-card h-100">
-                                    <div class="news-body">
-                                        <div class="news-title">{{ $item['title'] }}</div>
-                                        <div class="news-date">{{ \Carbon\Carbon::createFromFormat('l d/M/Y \a\t H:i', $item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i') }}</div>
-                                        <div class="news-content">
-                                            {{ $item['summary'] }}
-                                        </div>
+                            {{-- Removed the <a> tag here --}}
+                            <div class="news-card h-100">
+                                <div class="news-body">
+                                    <div class="news-title">{{ $item['title'] }}</div>
+                                    <div class="news-date">{{ \Carbon\Carbon::createFromFormat('l d/M/Y \a\t H:i', $item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i') }}</div>
+                                    <div class="news-content">
+                                        {{ $item['summary'] }}
                                     </div>
                                 </div>
-                            </a>
+                            </div>
                         </div>
                     @empty
                         <div class="col">
-                            <p>Tidak ada berita yang tersedia saat ini.</p>
+                            <p>Tidak ada berita yang tersedia untuk kode saham ini atau saat ini.</p>
                         </div>
                     @endforelse
                 </div>
             </div>
 
-            {{-- 2. Area untuk tombol "Lihat Semua" --}}
-            {{-- Wadah ini akan meregang tingginya, dan menengahkan tombol di dalamnya --}}
+            {{-- Area untuk tombol "Lihat Semua" --}}
             <div class="ps-4 d-flex align-items-center">
-                <a href="{{ route('news.index') }}" class="btn btn-light rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                <a href="{{ route('news.index', ['stock_code' => $searchStockCode]) }}" 
+                   id="viewAllBtn"
+                   class="btn btn-light rounded-circle d-flex align-items-center justify-content-center" 
+                   style="width: 45px; height: 45px;">
                     <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
-
         </div>
     </div>
     
@@ -103,6 +114,7 @@
                         <div>Sep 2023</div>
                         <div>Oct 2023</div>
                         <div>Nov 2023</div>
+                        <div>Nov 2023</div>
                     </div>
                 </div>
             </div>
@@ -114,10 +126,7 @@
                 </div>
                 
                 <div class="details-container">
-                    {{-- BUAT WRAPPER BARU UNTUK MENYEJAJARKAN ITEM --}}
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        
-                        {{-- 1. Badge Market Cap (tambahkan class mb-0) --}}
                         <div class="market-cap-badge mb-0">
                             <div class="market-cap-icon">
                                 <i class="bi bi-bar-chart-fill"></i>
@@ -128,22 +137,22 @@
                             </div>
                         </div>
 
-                        {{-- 2. Dropdown rentang waktu yang baru --}}
                         <div class="dropdown">
-                        <button class="btn range-dropdown-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            24 h
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">24 h</a></li>
-                            <li><a class="dropdown-item" href="#">7 d</a></li>
-                            <li><a class="dropdown-item" href="#">1 m</a></li>
-                            <li><a class="dropdown-item" href="#">1 y</a></li>
-                        </ul>
+                            <button class="btn range-dropdown-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                24 h
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">24 h</a></li>
+                                <li><a class="dropdown-item" href="#">7 d</a></li>
+                                <li><a class="dropdown-item" href="#">1 m</a></li>
+                                <li><a class="dropdown-item" href="#">1 y</a></li>
+                                <li><a class="dropdown-item" href="#">1 y</a></li>
+                            </ul>
                         </div>
                     </div>
                     
                     <table class="details-table">
-                         <tr>
+                        <tr>
                             <td>S&P 500</td>
                             <td>
                                 <div class="d-flex align-items-center justify-content-end">
@@ -193,4 +202,158 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    let searchTimeout;
+    const searchInput = $('#stockSearchInput');
+    const newsContainer = $('#newsContainer');
+    const searchSpinner = $('#searchSpinner');
+    const searchAlert = $('#searchAlert');
+    const viewAllBtn = $('#viewAllBtn');
+    
+    // Debounce function untuk menghindari terlalu banyak request
+    function debounce(func, wait) {
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(searchTimeout);
+                func(...args);
+            };
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Function untuk menampilkan loading
+    function showLoading() {
+        searchSpinner.show();
+    }
+    
+    // Function untuk menyembunyikan loading
+    function hideLoading() {
+        searchSpinner.hide();
+    }
+    
+    // Function untuk menampilkan error
+    function showError(message) {
+        searchAlert.text(message).show();
+        setTimeout(() => {
+            searchAlert.hide();
+        }, 5000);
+    }
+    
+    // Function untuk melakukan pencarian
+    function performSearch(stockCode) {
+        showLoading();
+        hideError();
+        
+        $.ajax({
+            url: window.location.pathname,
+            method: 'GET',
+            data: {
+                stock_code: stockCode
+            },
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                updateNewsDisplay(response.news);
+                updateViewAllButton(response.searchStockCode);
+                hideLoading();
+            },
+            error: function(xhr, status, error) {
+                console.error('Search error:', error);
+                let errorMessage = 'Gagal melakukan pencarian';
+                
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+                
+                showError(errorMessage);
+                hideLoading();
+            }
+        });
+    }
+    
+    // Function untuk menyembunyikan error
+    function hideError() {
+        searchAlert.hide();
+    }
+    
+    // Function untuk update tampilan berita
+    function updateNewsDisplay(newsData) {
+        newsContainer.empty();
+        
+        if (newsData.length === 0) {
+            newsContainer.html(`
+                <div class="col">
+                    <p>Tidak ada berita yang tersedia untuk kode saham ini atau saat ini.</p>
+                </div>
+            `);
+            return;
+        }
+        
+        newsData.forEach(function(item) {
+            const newsCard = `
+                <div class="news-card-wrapper">
+                    {{-- Removed the <a> tag here --}}
+                    <div class="news-card h-100">
+                        <div class="news-body">
+                            <div class="news-title">${item.title}</div>
+                            <div class="news-date">${item.formatted_date}</div>
+                            <div class="news-content">
+                                ${item.summary}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            newsContainer.append(newsCard);
+        });
+    }
+    
+    // Function untuk update tombol "Lihat Semua"
+    function updateViewAllButton(stockCode) {
+        const newsRoute = "{{ route('news.index') }}";
+        let newUrl = newsRoute;
+        
+        if (stockCode && stockCode.trim() !== '') {
+            newUrl += `?stock_code=${encodeURIComponent(stockCode)}`;
+        }
+        
+        viewAllBtn.attr('href', newUrl);
+    }
+    
+    // Debounced search function
+    const debouncedSearch = debounce(function(stockCode) {
+        performSearch(stockCode);
+    }, 500); // 500ms delay
+    
+    // Event listener untuk input pencarian
+    searchInput.on('input', function() {
+        const stockCode = $(this).val().trim();
+        debouncedSearch(stockCode);
+    });
+    
+    // Event listener untuk Enter key
+    searchInput.on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            const stockCode = $(this).val().trim();
+            clearTimeout(searchTimeout); // Clear debounce
+            performSearch(stockCode);
+        }
+    });
+    
+    // Clear search ketika input dikosongkan
+    searchInput.on('keyup', function(e) {
+        if (e.which === 8 || e.which === 46) { // Backspace or Delete
+            const stockCode = $(this).val().trim();
+            if (stockCode === '') {
+                debouncedSearch('');
+            }
+        }
+    });
+});
+</script>
 @endsection

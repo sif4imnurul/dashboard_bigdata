@@ -10,8 +10,9 @@ use App\Http\Controllers\GrafikController;
 //     return view('welcome');
 // });
 
-Route::get('/', [NewsController::class, 'index']);
-
+// Option 2: Keep '/' unnamed, and add a separate /dashboard route
+Route::get('/', [NewsController::class, 'index']); // Unnamed root
+Route::get('/dashboard', [NewsController::class, 'index'])->name('dashboard'); // Named dashboard
 // berita 
 Route::get('/berita', [NewsController::class, 'showAllNews'])->name('news.index');
 Route::get('/berita/search', [NewsController::class, 'showAllNews'])->name('news.search');
