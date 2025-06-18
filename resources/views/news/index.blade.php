@@ -44,7 +44,10 @@ $(document).ready(function() {
 
     function fetchNews(query = '') {
         $.ajax({
-            url: '{{ route("news.search") }}',
+            // ==========================================================
+            // PERBAIKAN: Menggunakan route 'news.index' bukan 'news.search'
+            // ==========================================================
+            url: '{{ route("news.index") }}',
             type: 'GET',
             data: { search: query },
             success: function(response) {
