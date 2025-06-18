@@ -32,7 +32,7 @@
 
 @section('content')
 <div class="col-md-10 main-content">
-    {{-- Search Bar --}}
+    {{-- Search Bar untuk mencari saham lain --}}
     <div class="search-container mb-3">
         <form id="stockSearchForm" class="w-100">
             <div class="search-bar">
@@ -102,7 +102,6 @@
         <div class="content-section mt-4">
             <div class="section-title d-flex justify-content-between">
                 <span>Berita Terkait: {{ $isDetailView ? $stockData['stock_code'] : 'Terkini' }}</span>
-                {{-- PERBAIKAN: Link menunjuk ke route 'news.index' yang benar --}}
                 <a href="{{ route('news.index') }}" class="btn btn-sm btn-outline-secondary">Lihat Semua Berita</a>
             </div>
             <div class="row g-3">
@@ -111,7 +110,7 @@
                         <div class="news-card h-100">
                             <div class="news-body">
                                 <div class="news-title">{{ $item['title'] }}</div>
-                                {{-- PERBAIKAN: Langsung tampilkan tanggal yang sudah diformat dari Controller --}}
+                                {{-- Menampilkan tanggal yang sudah diformat oleh Controller --}}
                                 <div class="news-date">{{ $item['original_date'] ?? '' }}</div>
                                 <div class="news-content">{{ Str::limit($item['summary'], 150) }}</div>
                             </div>
@@ -134,33 +133,47 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof Chart === 'undefined') return;
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js tidak termuat.');
+        return;
+    }
 
     const initialChartData = {!! json_encode($chartData ?? []) !!};
     const stockCode = '{{ $stockData["stock_code"] ?? "" }}';
-    if (!stockCode || initialChartData.length === 0) return;
+
+    // Jika tidak ada data saham, jangan jalankan script chart
+    if (!stockCode || initialChartData.length === 0) {
+        console.warn('Data saham atau data chart tidak tersedia, script chart tidak dijalankan.');
+        return;
+    }
 
     const ctx = document.getElementById('stockChart').getContext('2d');
     const loadingOverlay = document.getElementById('loadingOverlay');
     let stockChart;
     let currentPeriod = '1y'; // Periode saat halaman pertama kali dimuat
 
+    // Fungsi untuk memformat label sumbu-X secara dinamis
     function formatChartLabels(labels, period) {
         if (period === '1w' || period === '1m' || period === '3m' || period === '6m') {
+            // Untuk periode harian, tampilkan Hari-Bulan (misal: 19-Jun)
             return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
         }
         if (period === '1y' || period === 'all') {
+            // Untuk periode bulanan, tampilkan Bulan-Tahun (misal: Jun '25)
             return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
         }
-        return labels;
+        return labels; // Fallback jika periode tidak dikenal
     }
 
     function renderChart(apiData, period) {
+        // Ambil data 'Close' dari API, ini akan menjadi titik-titik di grafik
         const dataPoints = apiData.map(item => item.Close);
+        
+        // Ambil data 'Date' untuk label di bawah grafik
         const originalLabels = apiData.map(item => item.Date);
         const formattedLabels = formatChartLabels(originalLabels, period);
 
-        if (stockChart) stockChart.destroy();
+        if (stockChart) stockChart.destroy(); // Hancurkan chart lama jika ada
         
         stockChart = new Chart(ctx, {
             type: 'line',
@@ -195,22 +208,28 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchAndUpdateChart(period) {
         currentPeriod = period;
         loadingOverlay.style.display = 'flex';
+        
+        // Panggil endpoint AJAX yang sudah kita buat di routes/web.php
         fetch(`/ajax/chart-data/${stockCode}?period=${period}`)
             .then(response => response.json())
             .then(result => {
-                if (result.status === 'success' && result.data.length > 0) {
-                    renderChart(result.data, period);
+                if (result.status === 'success' && result.data && result.data.length > 0) {
+                    renderChart(result.data, period); // Render chart dengan data baru
                 } else {
-                    console.error('Failed to fetch new chart data:', result.message);
-                    alert('Gagal memuat data untuk periode ini.');
+                    console.error('Gagal mengambil data chart baru:', result.message);
+                    alert('Gagal memuat data untuk periode ini atau data tidak tersedia.');
                 }
             })
-            .catch(error => console.error('Error fetching data:', error))
-            .finally(() => { loadingOverlay.style.display = 'none'; });
+            .catch(error => console.error('Error saat fetch data:', error))
+            .finally(() => {
+                loadingOverlay.style.display = 'none'; // Sembunyikan loading
+            });
     }
 
+    // Render chart pertama kali dengan data dari server
     renderChart(initialChartData, currentPeriod);
 
+    // Tambahkan event listener untuk setiap tab periode
     document.querySelectorAll('.chart-tabs .chart-tab').forEach(tab => {
         tab.addEventListener('click', function() {
             document.querySelectorAll('.chart-tabs .chart-tab').forEach(t => t.classList.remove('active'));
@@ -219,10 +238,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Logika untuk form pencarian
     const searchForm = document.getElementById('stockSearchForm');
     searchForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const newStockCode = document.getElementById('stockSearchInput').value.trim().toUpperCase();
+        
+        // Redirect ke halaman detail jika ada input, atau ke halaman utama jika kosong
         window.location.href = newStockCode ? `/${newStockCode}` : '/';
     });
 });
