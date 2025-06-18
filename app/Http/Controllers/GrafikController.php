@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon; // Pastikan ini di-import
+use Carbon\Carbon;
 
 class GrafikController extends Controller
 {
@@ -24,7 +24,7 @@ class GrafikController extends Controller
     {
         // Tentukan apakah ini halaman detail atau dashboard umum
         $isDetailView = $stock_code !== null;
-        $stock_code_to_fetch = strtoupper($stock_code ?? 'BBCA'); // Default ke BBCA jika tidak ada kode
+        $stock_code_to_fetch = strtoupper($stock_code ?? 'BBCA');
 
         Log::info("Menampilkan dasbor untuk kode saham: " . $stock_code_to_fetch);
 
@@ -32,7 +32,6 @@ class GrafikController extends Controller
         $chartData = $this->getChartDataForView($stock_code_to_fetch);
         $newsData = $this->getNewsData($isDetailView, $stock_code_to_fetch);
 
-        // Mengirim semua data yang dibutuhkan ke view 'dashboard.blade.php'
         return view('dashboard', [
             'stockData' => $stockData,
             'chartData' => $chartData,
@@ -98,10 +97,8 @@ class GrafikController extends Controller
         foreach ($newsData as &$item) {
             if (!empty($item['original_date'])) {
                 try {
-                    // Perbaikan: Menggunakan parse() untuk format tanggal standar dari API
                     $item['original_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
                 } catch (\Exception $e) {
-                    // Jika parsing gagal, tampilkan tanggal aslinya saja
                     $item['original_date'] = $item['original_date'];
                 }
             }
@@ -123,34 +120,3 @@ class GrafikController extends Controller
             : response()->json(['status' => 'error', 'message' => 'Gagal mengambil data'], 500);
     }
 }
-
-/**
-     * Endpoint AJAX untuk mengambil semua data yang dibutuhkan oleh dashboard.
-     * Dipanggil saat pengguna melakukan pencarian saham baru.
-     */
-    public function getDashboardDataAjax($stock_code)
-    {
-        $stock_code_to_fetch = strtoupper($stock_code);
-        $isDetailView = true; // Pencarian AJAX selalu untuk halaman detail
-
-        $stockData = $this->getStockDetails($stock_code_to_fetch);
-        $chartData = $this->getChartDataForView($stock_code_to_fetch);
-        $newsData = $this->getNewsData($isDetailView, $stock_code_to_fetch);
-
-        // Jika data saham tidak ditemukan setelah pencarian, kembalikan error
-        if (empty($stockData)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "Data untuk kode saham '{$stock_code_to_fetch}' tidak dapat ditemukan."
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'stockData' => $stockData,
-            'chartData' => $chartData,
-            'news' => $newsData,
-            'isDetailView' => $isDetailView,
-            'searchStockCode' => $stock_code_to_fetch
-        ]);
-    }
