@@ -12,7 +12,6 @@
                 <div class="info-row">
                     <span class="info-label">Revenue:</span>
                     <span class="info-value">
-                        {{-- Menggunakan helper untuk memformat angka --}}
                         {{ formatHumanNumber($report['revenue'] ?? 0) }}
                     </span>
                 </div>
@@ -33,7 +32,8 @@
 
                 <div class="info-row">
                     <span class="info-label">Net Profit/Loss:</span>
-                    <span class="info-value">
+                    {{-- Tambahkan class kondisional untuk warna --}}
+                    <span class="info-value fw-bold {{ ($report['net_profit_loss'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
                         {{ formatHumanNumber($report['net_profit_loss'] ?? 0) }}
                     </span>
                 </div>
@@ -41,7 +41,6 @@
                 <div class="info-row">
                     <span class="info-label">Net Profit Margin:</span>
                     <span class="info-value">
-                        {{-- Ini adalah persentase, jadi tidak perlu helper formatHumanNumber --}}
                         @if(isset($report['net_profit_margin_pct']) && is_numeric($report['net_profit_margin_pct']))
                             {{ number_format($report['net_profit_margin_pct'] * 100, 2) }}%
                         @else
@@ -74,7 +73,6 @@
                 <div class="info-row">
                     <span class="info-label">Debt to Equity Ratio:</span>
                     <span class="info-value">
-                        {{-- Ini adalah rasio, jadi tidak perlu helper formatHumanNumber --}}
                         @if(isset($report['debt_to_equity_ratio']) && is_numeric($report['debt_to_equity_ratio']))
                             {{ number_format($report['debt_to_equity_ratio'], 4) }}
                         @else
@@ -90,6 +88,7 @@
                     </span>
                 </div>
                 
+                {{-- Menghilangkan baris Retrieved At
                 <div class="info-row">
                     <span class="info-label">Retrieved At:</span>
                     <span class="info-value">
@@ -100,14 +99,17 @@
                         @endif
                     </span>
                 </div>
+                --}}
             </div>
             
+            {{-- Menghilangkan footer periode dan tahun
             <div class="card-footer bg-white border-0 text-end text-muted">
                 <small>
                     Periode: {{ strtoupper($report['period'] ?? request('period', 'tw1')) }} 
                     Tahun: {{ $report['year'] ?? request('year', '2021') }}
                 </small>
             </div>
+            --}}
         </div>
     </div>
 @empty

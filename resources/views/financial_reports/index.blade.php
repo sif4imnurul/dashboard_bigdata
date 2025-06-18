@@ -6,7 +6,7 @@
     <div class="search-container mb-4">
         <div class="search-bar">
             <i class="bi bi-search"></i>
-            <input type="text" id="reportSearch" placeholder="Cari kode/nama perusahaan..." autocomplete="off" value="{{ $searchQuery }}">
+            <input type="text" id="reportSearch" placeholder="Cari kode/nama perusahaan..." autocomplete="off" value="{{ $searchQuery ?? '' }}">
         </div>
     </div>
 
@@ -15,20 +15,23 @@
         <div class="header-section d-flex justify-content-between align-items-center mb-4">
             <div class="section-title d-flex align-items-center">
                 Laporan Keuangan
-                <div class="filters d-flex align-items-center ms-3"> {{-- Added ms-3 for spacing --}}
-                    <div class="me-2"> {{-- Adjusted spacing --}}
+                <div class="filters d-flex align-items-center ms-3">
+                    <div class="me-2">
                         <select class="form-select form-select-sm" id="reportYear">
                             @foreach ($availableYears as $year)
-                                <option value="{{ $year }}" {{ $currentYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                <option value="{{ $year }}" {{ ($currentYear ?? '') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="me-2">
+                        <select class="form-select form-select-sm" id="reportPeriod">
+                            @foreach ($availablePeriods as $period)
+                                <option value="{{ $period }}" {{ ($currentPeriod ?? '') == $period ? 'selected' : '' }}>{{ strtoupper($period) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <select class="form-select form-select-sm" id="reportPeriod">
-                            @foreach ($availablePeriods as $period)
-                                <option value="{{ $period }}" {{ $currentPeriod == $period ? 'selected' : '' }}>{{ strtoupper($period) }}</option>
-                            @endforeach
-                        </select>
+                        <button class="btn btn-green btn-sm" id="applyFilterBtn">Terapkan</button>
                     </div>
                 </div>
             </div>
@@ -90,43 +93,33 @@ $(document).ready(function() {
     function showLoading() {
         $('#loadingIndicator').show();
         $('#reportsContainer').hide();
+        $('#paginationContainer').hide();
     }
 
     function hideLoading() {
         $('#loadingIndicator').hide();
         $('#reportsContainer').show();
+        $('#paginationContainer').show();
     }
 
     function updateAvailablePeriods(year) {
         const periodSelect = $('#reportPeriod');
-        const currentPeriod = periodSelect.val();
+        periodSelect.empty();
+        const periodsForYear = availableCollections
+            .map(c => c.match(/processed_reports_(\d{4})_(tw\d|TAHUNAN)/))
+            .filter(m => m && m[1] == year)
+            .map(m => m[2]);
         
-        const periodsForYear = availableCollections.filter(collection => {
-            const match = collection.match(/processed_reports_(\d{4})_(tw\d|TAHUNAN)/);
-            return match && match[1] == year;
-        }).map(collection => {
-            const match = collection.match(/processed_reports_(\d{4})_(tw\d|TAHUNAN)/);
-            return match[2];
-        });
-
         const uniquePeriods = [...new Set(periodsForYear)].sort();
 
-        periodSelect.empty();
-        
         if (uniquePeriods.length > 0) {
             uniquePeriods.forEach(period => {
-                const selected = period === currentPeriod ? 'selected' : '';
-                periodSelect.append(`<option value="${period}" ${selected}>${period.toUpperCase()}</option>`);
+                periodSelect.append(`<option value="${period}">${period.toUpperCase()}</option>`);
             });
         } else {
             ['tw1', 'tw2', 'tw3', 'tw4', 'TAHUNAN'].forEach(period => {
-                const selected = period === currentPeriod ? 'selected' : '';
-                periodSelect.append(`<option value="${period}" ${selected}>${period.toUpperCase()}</option>`);
+                periodSelect.append(`<option value="${period}">${period.toUpperCase()}</option>`);
             });
-        }
-
-        if (!uniquePeriods.includes(currentPeriod) && uniquePeriods.length > 0) {
-            periodSelect.val(uniquePeriods[0]).trigger('change');
         }
     }
 
@@ -141,117 +134,48 @@ $(document).ready(function() {
         $.ajax({
             url: '{{ route("financial_reports.index") }}',
             type: 'GET',
-            data: {
-                year: year,
-                period: period,
-                search: searchQuery,
-                page: page
-            },
+            data: { year, period, search: searchQuery, page },
             timeout: 30000,
             success: function(response) {
-                console.log('Response received:', response);
-                
                 $('#reportsContainer').html(response.reportsHtml);
-                
-                if (response.paginationHtml) {
-                    $('#paginationContainer').html(response.paginationHtml);
-                } else {
-                    $('#paginationContainer').empty();
-                }
-                
-                if (response.availableCollections) {
-                    availableCollections = response.availableCollections;
-                    updateAvailablePeriods($('#reportYear').val());
-                }
-                
-                if (response.debug) {
-                    console.log('Debug info:', response.debug);
-                }
-                
+                $('#paginationContainer').html(response.paginationHtml || '');
                 hideLoading();
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', { xhr, status, error });
-                console.error('Response Text:', xhr.responseText);
-                
-                let errorMessage = 'Gagal memuat laporan keuangan.';
-                let detailMessage = '';
-                
-                try {
-                    const errorResponse = JSON.parse(xhr.responseText);
-                    if (errorResponse.message) {
-                        errorMessage = errorResponse.message;
-                    }
-                    if (errorResponse.available_collections) {
-                        const suggestions = errorResponse.available_collections.map(collection => {
-                            const match = collection.match(/processed_reports_(\d{4})_(tw\d|TAHUNAN)/);
-                            return match ? `${match[1]} ${match[2].toUpperCase()}` : collection;
-                        });
-                        detailMessage = `<br><small>Data tersedia: ${suggestions.join(', ')}</small>`;
-                    }
-                } catch (e) {
-                    if (xhr.status === 0) {
-                        errorMessage = 'Koneksi terputus. Periksa koneksi internet Anda.';
-                    } else if (xhr.status === 500) {
-                        errorMessage = 'Server error. Periksa log server.';
-                    } else if (xhr.status === 404) {
-                        errorMessage = 'Data tidak ditemukan untuk kombinasi tahun dan periode ini.';
-                    }
-                }
-                
-                $('#reportsContainer').html(`
-                    <div class="alert alert-danger col-12 reports-card-wrapper">
-                        <strong>Error:</strong> ${errorMessage}${detailMessage}<br>
-                        <small>Status: ${xhr.status} - ${error}</small>
-                    </div>
-                `);
+                $('#reportsContainer').html('<div class="alert alert-danger col-12">Gagal memuat laporan keuangan.</div>');
                 $('#paginationContainer').empty();
                 hideLoading();
             }
         });
     }
 
-    // Year change handler
+    // Dropdown Tahun HANYA mengubah opsi Periode.
     $('#reportYear').on('change', function() {
-        const selectedYear = $(this).val();
-        updateAvailablePeriods(selectedYear);
-        fetchReports(1);
+        updateAvailablePeriods($(this).val());
     });
 
-    // Period change handler
-    $('#reportPeriod').on('change', function() {
+    // Tombol "Terapkan" menjadi pemicu utama.
+    $('#applyFilterBtn').on('click', function() {
         fetchReports(1);
     });
-
-    // Initialize periods for current year on page load
-    updateAvailablePeriods($('#reportYear').val());
-    // Initial fetch of reports based on current filter values
-    fetchReports(1);
-
-
-    // Search with debounce
+    
+    // Search dengan debounce
     $('#reportSearch').on('input', function() {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            fetchReports(1);
-        }, 500);
+        searchTimeout = setTimeout(() => fetchReports(1), 500);
     });
 
     // Pagination
     $(document).on('click', '#paginationContainer a', function(e) {
         e.preventDefault();
-        const pageUrl = $(this).attr('href');
-        const urlParams = new URLSearchParams(new URL(pageUrl).search);
-        const page = urlParams.get('page');
+        const page = new URL($(this).attr('href')).searchParams.get('page');
         fetchReports(page);
     });
 
-    // Auto-refresh every 5 minutes for real-time data
-    setInterval(function() {
-        console.log('Auto-refreshing data...');
-        const currentPage = $('#paginationContainer .page-item.active .page-link').text() || 1;
-        fetchReports(currentPage);
-    }, 300000); // 5 minutes
+    // Panggil saat halaman pertama kali dimuat
+    updateAvailablePeriods($('#reportYear').val());
+    fetchReports(1); 
 });
 </script>
 @endsection
