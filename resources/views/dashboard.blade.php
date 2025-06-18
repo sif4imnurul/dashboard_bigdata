@@ -150,7 +150,7 @@
                                 <div class="news-title">{{ $item['title'] }}</div>
                                 @if(!empty($item['original_date']))
                                 <div class="news-date">
-                                    {{ \Carbon\Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i') }}
+                                    {{ $item['original_date'] }}
                                 </div>
                                 @endif
                                 <div class="news-content">
