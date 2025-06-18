@@ -5,7 +5,7 @@
 /* Style tambahan untuk loading dan UX */
 .chart-container {
     position: relative;
-    min-height: 400px;
+    min-height: 400px; /* Beri tinggi minimal agar tidak collaps saat loading */
 }
 #loadingOverlay {
     position: absolute;
@@ -49,6 +49,7 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
+    {{-- Hanya tampilkan jika data saham berhasil dimuat --}}
     @if(!empty($stockData))
         {{-- Bagian Grafik dan Rincian --}}
         <div class="content-section">
@@ -101,9 +102,7 @@
         <div class="content-section mt-4">
             <div class="section-title d-flex justify-content-between">
                 <span>Berita Terkait: {{ $isDetailView ? $stockData['stock_code'] : 'Terkini' }}</span>
-                {{-- =============================================== --}}
-                {{-- PERBAIKAN: Link menunjuk ke route 'news.index' --}}
-                {{-- =============================================== --}}
+                {{-- PERBAIKAN: Link menunjuk ke route 'news.index' yang benar --}}
                 <a href="{{ route('news.index') }}" class="btn btn-sm btn-outline-secondary">Lihat Semua Berita</a>
             </div>
             <div class="row g-3">
@@ -112,6 +111,7 @@
                         <div class="news-card h-100">
                             <div class="news-body">
                                 <div class="news-title">{{ $item['title'] }}</div>
+                                {{-- PERBAIKAN: Langsung tampilkan tanggal yang sudah diformat dari Controller --}}
                                 <div class="news-date">{{ $item['original_date'] ?? '' }}</div>
                                 <div class="news-content">{{ Str::limit($item['summary'], 150) }}</div>
                             </div>
@@ -133,47 +133,49 @@
 
 @push('scripts')
 <script>
-// Script ini sama dengan versi sebelumnya, tidak perlu diubah,
-// tapi disertakan lagi untuk kelengkapan.
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof Chart === 'undefined') return;
 
     const initialChartData = {!! json_encode($chartData ?? []) !!};
     const stockCode = '{{ $stockData["stock_code"] ?? "" }}';
-
     if (!stockCode || initialChartData.length === 0) return;
 
     const ctx = document.getElementById('stockChart').getContext('2d');
     const loadingOverlay = document.getElementById('loadingOverlay');
     let stockChart;
+    let currentPeriod = '1y'; // Periode saat halaman pertama kali dimuat
 
-    function formatDataForChart(apiData) {
-        const labels = apiData.map(item => new Date(item.Date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: '2-digit' }));
-        const dataPoints = apiData.map(item => item.Close);
-        return { labels, dataPoints };
+    function formatChartLabels(labels, period) {
+        if (period === '1w' || period === '1m' || period === '3m' || period === '6m') {
+            return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+        }
+        if (period === '1y' || period === 'all') {
+            return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
+        }
+        return labels;
     }
 
-    function renderChart(apiData) {
-        const { labels, dataPoints } = formatDataForChart(apiData);
+    function renderChart(apiData, period) {
+        const dataPoints = apiData.map(item => item.Close);
+        const originalLabels = apiData.map(item => item.Date);
+        const formattedLabels = formatChartLabels(originalLabels, period);
+
         if (stockChart) stockChart.destroy();
+        
         stockChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: formattedLabels,
                 datasets: [{
                     label: `Harga Penutupan ${stockCode}`,
                     data: dataPoints,
                     borderColor: '#16a34a',
                     backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.1,
-                    fill: true,
+                    borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true,
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 scales: {
                     x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
                     y: { ticks: { callback: value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value) } }
@@ -191,17 +193,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchAndUpdateChart(period) {
+        currentPeriod = period;
         loadingOverlay.style.display = 'flex';
         fetch(`/ajax/chart-data/${stockCode}?period=${period}`)
             .then(response => response.json())
             .then(result => {
-                if (result.status === 'success' && result.data) renderChart(result.data);
+                if (result.status === 'success' && result.data.length > 0) {
+                    renderChart(result.data, period);
+                } else {
+                    console.error('Failed to fetch new chart data:', result.message);
+                    alert('Gagal memuat data untuk periode ini.');
+                }
             })
             .catch(error => console.error('Error fetching data:', error))
             .finally(() => { loadingOverlay.style.display = 'none'; });
     }
 
-    renderChart(initialChartData);
+    renderChart(initialChartData, currentPeriod);
 
     document.querySelectorAll('.chart-tabs .chart-tab').forEach(tab => {
         tab.addEventListener('click', function() {
@@ -215,11 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
     searchForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const newStockCode = document.getElementById('stockSearchInput').value.trim().toUpperCase();
-        if (newStockCode) {
-            window.location.href = `/${newStockCode}`;
-        } else {
-            window.location.href = '/';
-        }
+        window.location.href = newStockCode ? `/${newStockCode}` : '/';
     });
 });
 </script>
