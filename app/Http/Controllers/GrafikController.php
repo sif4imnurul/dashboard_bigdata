@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon; // <-- Tambahkan ini
 
 class GrafikController extends Controller
 {
@@ -61,13 +62,25 @@ class GrafikController extends Controller
         $newsResponse = Http::get($newsApiUrl, $apiParams);
         if ($newsResponse->successful()) {
             $newsData = array_slice($newsResponse->json()['data'] ?? [], 0, 10);
+            
+            // ===================================================================
+            // PERBAIKAN: Menggunakan Carbon::parse untuk membaca format tanggal dari API
+            // ===================================================================
+            foreach ($newsData as &$item) {
+                if (!empty($item['original_date'])) {
+                   try {
+                        // Gunakan parse() yang lebih cerdas, bukan createFromFormat()
+                        $item['original_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
+                   } catch (\Exception $e) {
+                        // Jika parsing tetap gagal, tampilkan tanggal aslinya saja
+                        $item['original_date'] = $item['original_date']; 
+                   }
+                }
+            }
         } else {
             Log::error("Gagal mengambil data berita: " . $newsResponse->body());
         }
 
-        // ===================================================================
-        // PERBAIKAN: Mengarahkan ke view 'dashboard' bukan 'grafik'
-        // ===================================================================
         return view('dashboard', [
             'stockData' => $stockData,
             'chartData' => $chartData,
