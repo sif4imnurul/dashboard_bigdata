@@ -12,35 +12,37 @@
                 <div class="info-row">
                     <span class="info-label">Revenue:</span>
                     <span class="info-value">
-                        {{ $report['revenue_rupiah'] ?? 'N/A' }}
+                        {{-- Menggunakan helper untuk memformat angka --}}
+                        {{ formatHumanNumber($report['revenue'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Cost of Revenue:</span>
                     <span class="info-value">
-                        {{ $report['cost_of_revenue_rupiah'] ?? 'N/A' }}
+                        {{ formatHumanNumber($report['cost_of_revenue'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Gross Profit:</span>
                     <span class="info-value">
-                        {{ $report['gross_profit_rupiah'] ?? 'N/A' }}
+                        {{ formatHumanNumber($report['gross_profit'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Net Profit/Loss:</span>
                     <span class="info-value">
-                        {{ $report['net_profit_loss_rupiah'] ?? 'N/A' }}
+                        {{ formatHumanNumber($report['net_profit_loss'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Net Profit Margin:</span>
                     <span class="info-value">
-                        @if(isset($report['net_profit_margin_pct']))
+                        {{-- Ini adalah persentase, jadi tidak perlu helper formatHumanNumber --}}
+                        @if(isset($report['net_profit_margin_pct']) && is_numeric($report['net_profit_margin_pct']))
                             {{ number_format($report['net_profit_margin_pct'] * 100, 2) }}%
                         @else
                             N/A
@@ -51,28 +53,29 @@
                 <div class="info-row">
                     <span class="info-label">Total Assets:</span>
                     <span class="info-value">
-                        {{ $report['total_assets_rupiah'] ?? 'N/A' }}
+                        {{ formatHumanNumber($report['total_assets'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Total Liabilities:</span>
                     <span class="info-value">
-                        {{ $report['total_liabilities_rupiah'] ?? 'N/A' }}
+                        {{ formatHumanNumber($report['total_liabilities'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Total Equity:</span>
                     <span class="info-value">
-                        {{ $report['total_equity_rupiah'] ?? 'N/A' }}
+                        {{ formatHumanNumber($report['total_equity'] ?? 0) }}
                     </span>
                 </div>
 
                 <div class="info-row">
                     <span class="info-label">Debt to Equity Ratio:</span>
                     <span class="info-value">
-                        @if(isset($report['debt_to_equity_ratio']))
+                        {{-- Ini adalah rasio, jadi tidak perlu helper formatHumanNumber --}}
+                        @if(isset($report['debt_to_equity_ratio']) && is_numeric($report['debt_to_equity_ratio']))
                             {{ number_format($report['debt_to_equity_ratio'], 4) }}
                         @else
                             N/A
@@ -83,7 +86,7 @@
                 <div class="info-row">
                     <span class="info-label">Subsector:</span>
                     <span class="info-value">
-                        {{ $report['subsector'] ?? 'N/A' }}
+                        {{ formatSubsector($report['subsector'] ?? 'N/A') }}
                     </span>
                 </div>
                 
