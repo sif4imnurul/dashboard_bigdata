@@ -30,3 +30,4 @@ Route::get('/emiten/list', [YFinanceController::class, 'index'])->name('emiten.i
 // Halaman untuk laporan keuangan dari API IDX
 Route::get('/reports/financial', [FinancialReportController::class, 'index'])->name('financial_reports.index');
 
+Route::get('/ajax/dashboard/{stock_code}', [GrafikController::class, 'getDashboardDataAjax'])->name('dashboard.ajax');

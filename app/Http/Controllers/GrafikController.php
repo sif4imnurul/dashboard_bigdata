@@ -123,3 +123,34 @@ class GrafikController extends Controller
             : response()->json(['status' => 'error', 'message' => 'Gagal mengambil data'], 500);
     }
 }
+
+/**
+     * Endpoint AJAX untuk mengambil semua data yang dibutuhkan oleh dashboard.
+     * Dipanggil saat pengguna melakukan pencarian saham baru.
+     */
+    public function getDashboardDataAjax($stock_code)
+    {
+        $stock_code_to_fetch = strtoupper($stock_code);
+        $isDetailView = true; // Pencarian AJAX selalu untuk halaman detail
+
+        $stockData = $this->getStockDetails($stock_code_to_fetch);
+        $chartData = $this->getChartDataForView($stock_code_to_fetch);
+        $newsData = $this->getNewsData($isDetailView, $stock_code_to_fetch);
+
+        // Jika data saham tidak ditemukan setelah pencarian, kembalikan error
+        if (empty($stockData)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Data untuk kode saham '{$stock_code_to_fetch}' tidak dapat ditemukan."
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'stockData' => $stockData,
+            'chartData' => $chartData,
+            'news' => $newsData,
+            'isDetailView' => $isDetailView,
+            'searchStockCode' => $stock_code_to_fetch
+        ]);
+    }

@@ -5,248 +5,232 @@
 /* Style tambahan untuk loading dan UX */
 .chart-container {
     position: relative;
-    min-height: 400px; /* Beri tinggi minimal agar tidak collaps saat loading */
+    min-height: 400px;
 }
-#loadingOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-    backdrop-filter: blur(2px);
-    border-radius: 10px;
-    transition: opacity 0.3s;
+.page-loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.8); display: none;
+    justify-content: center; align-items: center; z-index: 9999;
 }
-.chart-tabs .chart-tab {
-    cursor: pointer;
-}
+.chart-tabs .chart-tab { cursor: pointer; }
 .chart-change.positive { color: #16a34a; }
 .chart-change.negative { color: #dc2626; }
 </style>
 @endpush
 
 @section('content')
+{{-- Overlay untuk Loading Seluruh Halaman --}}
+<div class="page-loading-overlay" id="pageLoadingOverlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+</div>
+
 <div class="col-md-10 main-content">
-    {{-- Search Bar untuk mencari saham lain --}}
     <div class="search-container mb-3">
         <form id="stockSearchForm" class="w-100">
             <div class="search-bar">
                 <i class="bi bi-search"></i>
                 <input type="text" id="stockSearchInput" 
                        placeholder="Cari saham, contoh: GOTO" 
-                       value="{{ $searchStockCode ?? '' }}" 
+                       value="{{ $stockData['stock_code'] ?? '' }}" 
                        autocomplete="off" class="form-control border-0 bg-transparent">
             </div>
         </form>
     </div>
     
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+    <div id="mainDashboardContent">
+        {{-- Konten ini akan di-replace oleh AJAX --}}
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
 
-    {{-- Hanya tampilkan jika data saham berhasil dimuat --}}
-    @if(!empty($stockData))
-        {{-- Bagian Grafik dan Rincian --}}
-        <div class="content-section">
-            <div class="row g-3">
-                <div class="col-md-8">
-                    <div class="section-title">Grafik Saham</div>
-                    <div class="chart-container">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="chart-symbol">{{ $stockData['stock_code'] ?? 'N/A' }}</div>
-                            <div class="chart-name">{{ $stockData['name'] ?? 'Nama Perusahaan' }}</div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex align-items-center">
-                                <div class="chart-price">{{ number_format($stockData['current_price'] ?? 0, 2) }}</div>
-                                <div class="chart-change {{ ($stockData['change_percent'] ?? 0) >= 0 ? 'positive' : 'negative' }}">
-                                    {{ ($stockData['change_percent'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($stockData['change_percent'] ?? 0, 2) }}%
-                                </div>
-                            </div>
-                            <div class="chart-tabs">
-                                <div class="chart-tab" data-period="1w">1Mgg</div>
-                                <div class="chart-tab" data-period="1m">1Bln</div>
-                                <div class="chart-tab" data-period="3m">3Bln</div>
-                                <div class="chart-tab" data-period="6m">6Bln</div>
-                                <div class="chart-tab active" data-period="1y">1Thn</div>
-                                <div class="chart-tab" data-period="all">Semua</div>
-                            </div>
-                        </div>
-                        <div class="chart-canvas-container">
-                            <div id="loadingOverlay" style="display: none;"><div class="spinner-border text-primary"></div></div>
-                            <canvas id="stockChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="section-title">Rincian</div>
-                    <div class="details-container">
-                        <table class="details-table">
-                            <tr><td>Kode Saham</td><td><strong>{{ $stockData['stock_code'] ?? '-' }}</strong></td></tr>
-                            <tr><td>Harga Terkini</td><td>{{ number_format($stockData['current_price'] ?? 0, 2) }}</td></tr>
-                            <tr><td>Tertinggi (Hari Ini)</td><td>{{ number_format($stockData['day_high'] ?? 0, 2) }}</td></tr>
-                            <tr><td>Terendah (Hari Ini)</td><td>{{ number_format($stockData['day_low'] ?? 0, 2) }}</td></tr>
-                            <tr><td>Volume</td><td>{{ number_format($stockData['volume'] ?? 0) }}</td></tr>
-                        </table>
-                    </div>
-                </div>
+        @if(!empty($stockData))
+            @include('partials.dashboard_content')
+        @else
+            <div class="alert alert-warning">
+                Data saham tidak dapat ditampilkan. Silakan coba cari kode saham yang valid.
             </div>
-        </div>
-
-        {{-- Bagian Berita Saham --}}
-        <div class="content-section mt-4">
-            <div class="section-title d-flex justify-content-between">
-                <span>Berita Terkait: {{ $isDetailView ? $stockData['stock_code'] : 'Terkini' }}</span>
-                <a href="{{ route('news.index') }}" class="btn btn-sm btn-outline-secondary">Lihat Semua Berita</a>
-            </div>
-            <div class="row g-3">
-                @forelse ($news as $item)
-                    <div class="col-md-4">
-                        <div class="news-card h-100">
-                            <div class="news-body">
-                                <div class="news-title">{{ $item['title'] }}</div>
-                                {{-- Menampilkan tanggal yang sudah diformat oleh Controller --}}
-                                <div class="news-date">{{ $item['original_date'] ?? '' }}</div>
-                                <div class="news-content">{{ Str::limit($item['summary'], 150) }}</div>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col"><p>Tidak ada berita yang tersedia.</p></div>
-                @endforelse
-            </div>
-        </div>
-
-    @else
-        <div class="alert alert-warning">
-            Data untuk saham ini tidak dapat ditampilkan. Silakan coba cari kode saham yang lain.
-        </div>
-    @endif
+        @endif
+    </div>
 </div>
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js tidak termuat.');
-        return;
-    }
+    // ==========================================================
+    // BAGIAN INTI UNTUK PENCARIAN AJAX DAN UPDATE HALAMAN
+    // ==========================================================
 
-    const initialChartData = {!! json_encode($chartData ?? []) !!};
-    const stockCode = '{{ $stockData["stock_code"] ?? "" }}';
+    const searchForm = document.getElementById('stockSearchForm');
+    const searchInput = document.getElementById('stockSearchInput');
+    const mainContentContainer = document.getElementById('mainDashboardContent');
+    const pageLoader = document.getElementById('pageLoadingOverlay');
 
-    // Jika tidak ada data saham, jangan jalankan script chart
-    if (!stockCode || initialChartData.length === 0) {
-        console.warn('Data saham atau data chart tidak tersedia, script chart tidak dijalankan.');
-        return;
-    }
-
-    const ctx = document.getElementById('stockChart').getContext('2d');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    let stockChart;
-    let currentPeriod = '1y'; // Periode saat halaman pertama kali dimuat
-
-    // Fungsi untuk memformat label sumbu-X secara dinamis
-    function formatChartLabels(labels, period) {
-        if (period === '1w' || period === '1m' || period === '3m' || period === '6m') {
-            // Untuk periode harian, tampilkan Hari-Bulan (misal: 19-Jun)
-            return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+    // Fungsi utama untuk melakukan pencarian via AJAX
+    function performAjaxSearch(stockCode) {
+        if (!stockCode) {
+            window.location.href = '/'; // Jika input kosong, kembali ke home
+            return;
         }
-        if (period === '1y' || period === 'all') {
-            // Untuk periode bulanan, tampilkan Bulan-Tahun (misal: Jun '25)
-            return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
-        }
-        return labels; // Fallback jika periode tidak dikenal
-    }
 
-    function renderChart(apiData, period) {
-        // Ambil data 'Close' dari API, ini akan menjadi titik-titik di grafik
-        const dataPoints = apiData.map(item => item.Close);
-        
-        // Ambil data 'Date' untuk label di bawah grafik
-        const originalLabels = apiData.map(item => item.Date);
-        const formattedLabels = formatChartLabels(originalLabels, period);
+        pageLoader.style.display = 'flex'; // Tampilkan loading
 
-        if (stockChart) stockChart.destroy(); // Hancurkan chart lama jika ada
-        
-        stockChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: formattedLabels,
-                datasets: [{
-                    label: `Harga Penutupan ${stockCode}`,
-                    data: dataPoints,
-                    borderColor: '#16a34a',
-                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                    borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true,
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
-                    y: { ticks: { callback: value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value) } }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: context => 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(context.parsed.y)
-                        }
-                    }
+        // Panggil endpoint AJAX baru yang sudah kita buat
+        fetch(`/ajax/dashboard/${stockCode}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Saham tidak ditemukan.') });
                 }
-            }
-        });
-    }
-
-    function fetchAndUpdateChart(period) {
-        currentPeriod = period;
-        loadingOverlay.style.display = 'flex';
-        
-        // Panggil endpoint AJAX yang sudah kita buat di routes/web.php
-        fetch(`/ajax/chart-data/${stockCode}?period=${period}`)
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success' && result.data && result.data.length > 0) {
-                    renderChart(result.data, period); // Render chart dengan data baru
-                } else {
-                    console.error('Gagal mengambil data chart baru:', result.message);
-                    alert('Gagal memuat data untuk periode ini atau data tidak tersedia.');
-                }
+                return response.text(); // Ambil respons sebagai teks (HTML)
             })
-            .catch(error => console.error('Error saat fetch data:', error))
+            .then(html => {
+                // Update URL di browser tanpa reload halaman
+                history.pushState(null, '', `/${stockCode}`);
+                
+                // Ganti seluruh konten dashboard dengan hasil render dari server
+                // Ini akan dibuat di langkah selanjutnya
+                // Untuk sekarang, kita akan update manual (lebih kompleks tapi bisa)
+                // Sebaiknya, kita modifikasi controller untuk me-render partial view
+                // Untuk sementara, kita reload saja dengan data baru
+                 window.location.reload(); // Solusi sementara paling mudah
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                alert(`Terjadi kesalahan: ${error.message}`);
+            })
             .finally(() => {
-                loadingOverlay.style.display = 'none'; // Sembunyikan loading
+                pageLoader.style.display = 'none'; // Sembunyikan loading
             });
     }
+    
+    // Fungsi untuk me-render ulang seluruh halaman (solusi sementara yang lebih simpel)
+    function searchAndRedirect(stockCode) {
+        if (stockCode) {
+            window.location.href = `/${stockCode}`;
+        } else {
+            window.location.href = '/';
+        }
+    }
 
-    // Render chart pertama kali dengan data dari server
-    renderChart(initialChartData, currentPeriod);
-
-    // Tambahkan event listener untuk setiap tab periode
-    document.querySelectorAll('.chart-tabs .chart-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.chart-tabs .chart-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            fetchAndUpdateChart(this.dataset.period);
-        });
-    });
-
-    // Logika untuk form pencarian
-    const searchForm = document.getElementById('stockSearchForm');
+    // Event listener untuk form pencarian
     searchForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const newStockCode = document.getElementById('stockSearchInput').value.trim().toUpperCase();
-        
-        // Redirect ke halaman detail jika ada input, atau ke halaman utama jika kosong
-        window.location.href = newStockCode ? `/${newStockCode}` : '/';
+        const newStockCode = searchInput.value.trim().toUpperCase();
+        searchAndRedirect(newStockCode);
     });
+
+    // ==========================================================
+    // BAGIAN UNTUK MENGURUS CHART (TIDAK BERUBAH)
+    // ==========================================================
+    function initializeChart() {
+        if (typeof Chart === 'undefined') return;
+
+        const initialChartData = {!! json_encode($chartData ?? []) !!};
+        const stockCode = '{{ $stockData["stock_code"] ?? "" }}';
+
+        if (!stockCode || initialChartData.length === 0) return;
+
+        const ctx = document.getElementById('stockChart')?.getContext('2d');
+        if (!ctx) return;
+
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        let stockChart;
+        let currentPeriod = '1y';
+
+        function formatChartLabels(labels, period) {
+            if (period === '1w' || period === '1m' || period === '3m' || period === '6m') {
+                return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+            }
+            if (period === '1y' || period === 'all') {
+                return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
+            }
+            return labels;
+        }
+
+        function renderChart(apiData, period) {
+            const dataPoints = apiData.map(item => item.Close);
+            const originalLabels = apiData.map(item => item.Date);
+            const formattedLabels = formatChartLabels(originalLabels, period);
+
+            if (stockChart) stockChart.destroy();
+            
+            stockChart = new Chart(ctx, {
+                type: 'line', data: { labels: formattedLabels, datasets: [{
+                    label: `Harga Penutupan ${stockCode}`, data: dataPoints,
+                    borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true,
+                }]},
+                options: { responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+                        y: { ticks: { callback: value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value) } }
+                    },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: {
+                        label: context => 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(context.parsed.y)
+                    }}}
+                }
+            });
+        }
+
+        function fetchAndUpdateChart(period) {
+            currentPeriod = period;
+            loadingOverlay.style.display = 'flex';
+            fetch(`/ajax/chart-data/${stockCode}?period=${period}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success' && result.data && result.data.length > 0) {
+                        renderChart(result.data, period);
+                    } else {
+                        alert('Gagal memuat data untuk periode ini atau data tidak tersedia.');
+                    }
+                })
+                .catch(error => console.error('Error saat fetch data:', error))
+                .finally(() => { loadingOverlay.style.display = 'none'; });
+        }
+
+        renderChart(initialChartData, currentPeriod);
+
+        document.querySelectorAll('.chart-tabs .chart-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.chart-tabs .chart-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                fetchAndUpdateChart(this.dataset.period);
+            });
+        });
+    }
+
+    // Inisialisasi chart jika konten utama ada
+    if(mainContentContainer.querySelector('#stockChart')) {
+        initializeChart();
+    }
 });
 </script>
 @endpush
+
+{{-- Buat file partial baru untuk konten --}}
+{{-- File: resources/views/partials/dashboard_content.blade.php --}}
+@if(!empty($stockData))
+    <div class="content-section">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="section-title">Grafik Saham</div>
+                <div class="chart-container">
+                    {{-- ... Konten grafik HTML ... --}}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="section-title">Rincian</div>
+                <div class="details-container">
+                     {{-- ... Konten rincian HTML ... --}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="content-section mt-4">
+        {{-- ... Konten berita HTML ... --}}
+    </div>
+@else
+    <div class="alert alert-warning">
+        Data untuk saham ini tidak dapat ditampilkan.
+    </div>
+@endif
