@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\YFinanceController;
 use App\Http\Controllers\FinancialReportController;
-use App\Http.Controllers\GrafikController;
+use App\Http\Controllers\GrafikController; // <-- INI SUDAH DIPERBAIKI
 
 /*
 |--------------------------------------------------------------------------
@@ -38,4 +38,3 @@ Route::get('/grafik/{stock_code?}', [GrafikController::class, 'index'])->name('g
 
 // Endpoint AJAX untuk mengambil data chart dinamis saat periode diubah
 Route::get('/ajax/chart-data/{stock_code}', [GrafikController::class, 'getChartData'])->name('grafik.data');
-
