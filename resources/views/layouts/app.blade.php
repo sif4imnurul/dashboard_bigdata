@@ -28,7 +28,7 @@
                     <i class="bi bi-newspaper"></i>
                     <span>Berita</span>
                 </a>
-                <a href="#" class="menu-item {{ request()->routeIs('grafik.*') ? 'active' : '' }}">
+                <a href="{{ route('grafik.index') }}" class="menu-item {{ request()->routeIs('grafik.*') ? 'active' : '' }}">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Grafik Saham</span>
                 </a>
