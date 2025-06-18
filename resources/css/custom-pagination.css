@@ -481,9 +481,161 @@ body {
     }
 }
 
+
 /* Table Hover Effect */
 /* ------------------ */
 .table-hover tbody tr:hover {
     background-color: rgba(13, 110, 253, 0.1);
     cursor: pointer;
+}
+
+
+/* IDX */
+/* General & Layout Styling */
+/* -------------------------------------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.main-content {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.content-section {
+    padding: 0; /* Remove padding here as main-content already has it */
+}
+
+/* Header Section for Title and Filters */
+.header-section {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 25px;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    display: flex; /* Make it a flex container to align items */
+    align-items: center; /* Vertically align items */
+}
+
+/* Filters Styling (Dropdowns) */
+.filters .form-select {
+    border-radius: 8px;
+    font-size: 0.9rem; /* Slightly smaller for compactness */
+    height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 1.75rem 0.375rem 0.75rem; /* Adjusted padding */
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.filters .form-select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+
+/* Report Card Styling (Masonry-like adaptation) */
+.reports-masonry-container {
+    column-count: 1; /* Default to 1 column on small screens */
+    column-gap: 1.5rem;
+    column-fill: balance;
+    padding: 0.5rem;
+}
+
+.reports-card-wrapper {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    break-inside: avoid; /* Essential for masonry layout */
+}
+
+.report-card {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    padding: 1.25rem;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    min-height: 250px; /* Ensures a minimum height for better visual consistency */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Soft shadow */
+}
+
+.report-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    border-color: #94a3b8;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.card-subtitle {
+    font-size: 0.9rem;
+    color: #6c757d !important;
+    margin-bottom: 15px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.9rem;
+}
+
+.info-row:last-of-type {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #555;
+    flex-basis: 45%;
+}
+
+.info-value {
+    text-align: right;
+    color: #333;
+    flex-basis: 55%;
+}
+
+.card-footer {
+    background-color: #f4f7f6 !important;
+    border-top: 1px solid #eee;
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+/* Responsive Report Grid */
+@media (min-width: 769px) and (max-width: 992px) {
+    .reports-masonry-container {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 768px) {
+    .reports-masonry-container {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 1024px) {
+    .reports-masonry-container {
+        column-count: 3;
+    }
 }

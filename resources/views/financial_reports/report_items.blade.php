@@ -1,6 +1,6 @@
 @forelse ($reports as $report)
-    <div class="col">
-        <div class="card h-100 shadow-sm border-0">
+    <div class="reports-card-wrapper">
+        <div class="report-card">
             <div class="card-body">
                 <h5 class="card-title mb-1">
                     {{ $report['company_code'] ?? 'N/A' }}
@@ -97,15 +97,6 @@
                         @endif
                     </span>
                 </div>
-
-                {{-- Debug: Show all available keys --}}
-                {{-- @if(config('app.debug'))
-                    <div class="info-row mt-2">
-                        <small class="text-muted">
-                            <strong>Available keys:</strong> {{ implode(', ', array_keys($report)) }}
-                        </small>
-                    </div>
-                @endif --}}
             </div>
             
             <div class="card-footer bg-white border-0 text-end text-muted">
@@ -117,7 +108,7 @@
         </div>
     </div>
 @empty
-    <div class="col-12">
+    <div class="reports-card-wrapper">
         <div class="alert alert-info text-center">
             Tidak ada laporan keuangan yang ditemukan untuk tahun dan periode ini.
             <br>
