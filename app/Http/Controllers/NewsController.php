@@ -6,11 +6,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log; // Pastikan ini ada untuk logging
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class NewsController extends Controller
 {
+    /**
+     * Alamat dasar dari API Flask Anda.
+     */
+    private $apiBaseUrl = 'http://localhost:5000/api';
+
     /**
      * Menampilkan halaman dashboard dengan data berita dari API.
      */
@@ -20,8 +25,10 @@ class NewsController extends Controller
         $searchStockCode = $request->input('stock_code', '');
 
         try {
-            // Ambil data dari API lokal
-            $response = Http::get('hhttp://137.184.211.191:5000/api/iqplus/news');
+            // ===================================================================
+            // PERBAIKAN: Mengganti 'hhttp://' menjadi 'http://' dan menggunakan localhost
+            // ===================================================================
+            $response = Http::get("{$this->apiBaseUrl}/iqplus/news");
 
             if ($response->successful()) {
                 $allData = $response->json()['data'] ?? [];
@@ -36,33 +43,24 @@ class NewsController extends Controller
                 // Ambil maksimal 10 berita pertama setelah filtering
                 $newsData = array_slice($allData, 0, 10);
 
-                // Format dates for display in JavaScript
+                // Format dates for display
                 foreach ($newsData as &$item) {
-                    $item['formatted_date'] = Carbon::createFromFormat('l d/M/Y \a\t H:i', $item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
+                    if (!empty($item['original_date'])) {
+                       try {
+                            $item['formatted_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
+                       } catch (\Exception $e) {
+                            $item['formatted_date'] = $item['original_date']; // Fallback jika format tidak sesuai
+                       }
+                    }
                 }
 
             } else {
                 Log::error("Gagal mengambil berita dari API di dashboard: " . $response->status() . " - " . $response->body());
-                if ($request->ajax()) {
-                    return response()->json(['error' => 'Gagal memuat berita. Status API: ' . $response->status()], $response->status());
-                } else {
-                    session()->flash('error', 'Gagal memuat berita. Status API: ' . $response->status());
-                }
-            }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('Koneksi API Berita Error (Dashboard): ' . $e->getMessage());
-            if ($request->ajax()) {
-                return response()->json(['error' => 'Tidak dapat terhubung ke server API berita. Pastikan server berjalan di localhost:5000'], 500);
-            } else {
-                session()->flash('error', 'Tidak dapat terhubung ke server API berita. Pastikan server berjalan di localhost:5000');
+                session()->flash('error', 'Gagal memuat berita. Status API: ' . $response->status());
             }
         } catch (\Exception $e) {
             Log::error("Kesalahan umum saat mengambil berita (Dashboard): " . $e->getMessage());
-            if ($request->ajax()) {
-                return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
-            } else {
-                session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
-            }
+            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
 
         // Check if the request is an AJAX request
@@ -86,33 +84,28 @@ class NewsController extends Controller
     public function showAllNews(Request $request)
     {
         $allNewsData = [];
-        // Tangkap parameter 'search' untuk pencarian berita umum (di judul berita)
         $searchQuery = $request->input('search', ''); 
-        // Tangkap parameter 'stock_code' untuk pencarian spesifik saham
         $searchStockCode = $request->input('stock_code', ''); 
 
         try {
-            // Panggil API untuk mendapatkan semua berita
-            $response = Http::get('http://137.184.211.191:5000/api/iqplus/news');
+            // PERBAIKAN: Menggunakan localhost
+            $response = Http::get("{$this->apiBaseUrl}/iqplus/news");
+
             if ($response->successful()) {
                 $allNewsData = $response->json()['data'] ?? [];
             } else {
                 Log::error("Gagal mengambil semua berita dari API: " . $response->status() . " - " . $response->body());
                 session()->flash('error', 'Gagal memuat semua berita. Status API: ' . $response->status());
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('Koneksi API Berita Error (Semua Berita): ' . $e->getMessage());
-            session()->flash('error', 'Tidak dapat terhubung ke server API berita. Pastikan server berjalan di localhost:5000');
         } catch (\Exception $e) {
             Log::error("Kesalahan umum saat mengambil semua berita: " . $e->getMessage());
             session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
 
-        $perPage = 30; // Jumlah berita per halaman
+        $perPage = 30;
         $currentPage = $request->input('page', 1);
         $collection = new Collection($allNewsData);
 
-        // Filter pencarian berita umum (jika ada)
         if (!empty($searchQuery)) {
             $searchTerm = strtolower($searchQuery);
             $collection = $collection->filter(function ($item) use ($searchTerm) {
@@ -120,25 +113,20 @@ class NewsController extends Controller
             });
         }
 
-        // Filter berdasarkan stock_code (jika ada)
         if (!empty($searchStockCode)) {
             $stockCodeTerm = strtolower($searchStockCode);
             $collection = $collection->filter(function ($item) use ($stockCodeTerm) {
-                // Asumsi: Judul berita mengandung kode saham
                 return str_contains(strtolower($item['title']), $stockCodeTerm);
             });
         }
 
-        // Ambil item sesuai halaman saat ini
         $currentPageItems = $collection->slice(($currentPage - 1) * $perPage, $perPage)->all();
         
-        // Buat objek paginator manual
         $paginatedItems = new LengthAwarePaginator($currentPageItems, count($collection), $perPage, $currentPage, [
             'path' => $request->url(),
             'query' => $request->query(),
         ]);
 
-        // Jika permintaan AJAX, kembalikan dalam format JSON
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'newsHtml' => view('news.news_items', ['news' => $paginatedItems])->render(),
@@ -148,8 +136,8 @@ class NewsController extends Controller
 
         return view('news.index', [
             'news' => $paginatedItems,
-            'searchQuery' => $searchQuery, // Teruskan juga search query ke view
-            'searchStockCode' => $searchStockCode // Teruskan juga stock code ke view
+            'searchQuery' => $searchQuery,
+            'searchStockCode' => $searchStockCode
         ]);
     }
 }
