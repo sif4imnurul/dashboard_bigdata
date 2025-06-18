@@ -21,7 +21,7 @@ class NewsController extends Controller
 
         try {
             // Ambil data dari API lokal
-            $response = Http::get('http://localhost:5000/api/iqplus/news');
+            $response = Http::get('hhttp://137.184.211.191:5000/api/iqplus/news');
 
             if ($response->successful()) {
                 $allData = $response->json()['data'] ?? [];
@@ -93,7 +93,7 @@ class NewsController extends Controller
 
         try {
             // Panggil API untuk mendapatkan semua berita
-            $response = Http::get('http://localhost:5000/api/iqplus/news');
+            $response = Http::get('http://137.184.211.191:5000/api/iqplus/news');
             if ($response->successful()) {
                 $allNewsData = $response->json()['data'] ?? [];
             } else {
