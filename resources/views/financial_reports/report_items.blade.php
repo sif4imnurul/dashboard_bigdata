@@ -87,29 +87,7 @@
                         {{ formatSubsector($report['subsector'] ?? 'N/A') }}
                     </span>
                 </div>
-                
-                {{-- Menghilangkan baris Retrieved At
-                <div class="info-row">
-                    <span class="info-label">Retrieved At:</span>
-                    <span class="info-value">
-                        @if(isset($report['retrieved_at']))
-                            {{ \Carbon\Carbon::parse($report['retrieved_at'])->locale('id')->translatedFormat('d M Y, H:i') }}
-                        @else
-                            N/A
-                        @endif
-                    </span>
-                </div>
-                --}}
             </div>
-            
-            {{-- Menghilangkan footer periode dan tahun
-            <div class="card-footer bg-white border-0 text-end text-muted">
-                <small>
-                    Periode: {{ strtoupper($report['period'] ?? request('period', 'tw1')) }} 
-                    Tahun: {{ $report['year'] ?? request('year', '2021') }}
-                </small>
-            </div>
-            --}}
         </div>
     </div>
 @empty
