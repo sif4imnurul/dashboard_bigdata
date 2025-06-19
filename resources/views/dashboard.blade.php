@@ -110,7 +110,8 @@
                         <div class="news-card h-100">
                             <div class="news-body">
                                 <div class="news-title">{{ $item['title'] }}</div>
-                                <div class="news-date">{{ $item['original_date'] ?? '' }}</div>
+                                {{-- GUNAKAN formatted_date YANG SUDAH DISIAPKAN DARI CONTROLLER --}}
+                                <div class="news-date">{{ $item['formatted_date'] ?? '' }}</div>
                                 <div class="news-content">{{ Str::limit($item['summary'], 150) }}</div>
                             </div>
                         </div>

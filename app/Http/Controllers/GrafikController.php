@@ -148,3 +148,38 @@ class GrafikController extends Controller
             : response()->json(['status' => 'error', 'message' => 'Gagal mengambil data'], 500);
     }
 }
+
+/**
+     * Helper untuk mengambil data berita.
+     */
+    private function getNewsData($isDetailView, $stock_code)
+    {
+        // Parameter pencarian berdasarkan kode saham jika ini adalah halaman detail
+        $apiParams = $isDetailView ? ['search' => $stock_code] : [];
+        $response = Http::get("{$this->newsApiBaseUrl}/iqplus/news", $apiParams);
+
+        if (!$response->successful()) {
+            Log::error("Gagal mengambil data berita: " . $response->body());
+            return [];
+        }
+
+        // Ambil 10 berita teratas untuk ditampilkan di dasbor
+        $newsData = array_slice($response->json()['data'] ?? [], 0, 10);
+
+        // Tambahkan key baru 'formatted_date' untuk tampilan, tanpa mengubah data asli
+        foreach ($newsData as &$item) {
+            if (!empty($item['original_date'])) {
+                try {
+                    // Gunakan Carbon::parse() yang lebih fleksibel terhadap berbagai format tanggal
+                    $item['formatted_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
+                } catch (\Exception $e) {
+                    // Jika gagal parsing, gunakan tanggal asli sebagai fallback
+                    $item['formatted_date'] = $item['original_date'];
+                    Log::warning("Gagal mem-parsing tanggal berita: " . $item['original_date']);
+                }
+            } else {
+                 $item['formatted_date'] = 'Tanggal tidak tersedia';
+            }
+        }
+        return $newsData;
+    }

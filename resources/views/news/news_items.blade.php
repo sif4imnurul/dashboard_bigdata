@@ -1,15 +1,16 @@
 @forelse ($news as $item)
-    {{-- Hapus class grid kolom agar layout dinamis --}}
     <div class="news-item-dynamic">
         <div class="news-card-wrapper">
             <div class="news-card">
                 <div class="news-body">
                     <div class="news-title">{{ $item['title'] }}</div>
                     <div class="news-date">
-                        {{ \Carbon\Carbon::createFromFormat('l d/M/Y \a\t H:i', $item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i') }}
+                        {{-- PERBAIKAN: Gunakan Carbon::parse() yang lebih aman --}}
+                        @if(!empty($item['original_date']))
+                            {{ \Carbon\Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i') }}
+                        @endif
                     </div>
                     <div class="news-content">
-                        {{-- Tampilkan ringkasan berita --}}
                         {{ $item['summary'] }}
                     </div>
                 </div>
