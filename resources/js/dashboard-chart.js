@@ -74,20 +74,59 @@ document.addEventListener('DOMContentLoaded', function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        enabled: false,
-                        external: externalTooltipHandler
+                scales: {
+                    x: {
+                        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+                    },
+                    y: {
+                        ticks: {
+                            callback: value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value)
+                        }
                     }
                 },
-                scales: {
-                    x: { display: false },
-                    y: { display: false }
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        // Aktifkan interaksi agar lebih mudah di-hover
+                        intersect: false,
+                        mode: 'index',
+                        // Kustomisasi callbacks untuk isi tooltip
+                        callbacks: {
+                            title: function(context) {
+                                const dataIndex = context[0].dataIndex;
+                                const dataPoint = activeChartData[dataIndex];
+                                if (!dataPoint) return '';
+                                return new Date(dataPoint.Date).toLocaleDateString('id-ID', {
+                                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                                });
+                            },
+                            label: function(context) {
+                                const dataPoint = activeChartData[context.dataIndex];
+                                if (!dataPoint) return '';
+                                const closePrice = dataPoint.Close || 0;
+                                return ` Tutup: Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(closePrice)}`;
+                            },
+                            afterLabel: function(context) {
+                                const dataPoint = activeChartData[context.dataIndex];
+                                if (!dataPoint) return '';
+
+                                const open = dataPoint.Open || 0;
+                                const high = dataPoint.High || 0;
+                                const low = dataPoint.Low || 0;
+                                const volume = dataPoint.Volume || 0;
+
+                                let tooltipRows = [];
+                                tooltipRows.push(` Buka:    Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(open)}`);
+                                tooltipRows.push(` Tinggi:  Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(high)}`);
+                                tooltipRows.push(` Rendah:  Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(low)}`);
+                                tooltipRows.push(` Volume:  ${new Intl.NumberFormat('id-ID').format(volume)}`);
+                                
+                                return tooltipRows;
+                            }
+                        }
+                    }
                 }
             }
         });

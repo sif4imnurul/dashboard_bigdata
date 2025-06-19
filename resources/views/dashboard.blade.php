@@ -50,7 +50,7 @@
     @endif
 
     {{-- Hanya tampilkan jika data saham berhasil dimuat --}}
-    @if(!empty($stockData))
+    @if(!empty($stockData) && !empty($stockData['stock_code']))
         {{-- Bagian Grafik dan Rincian --}}
         <div class="content-section">
             <div class="row g-3">
@@ -122,7 +122,7 @@
         </div>
 
     @else
-        <div class="alert alert-warning">
+        <div class="alert alert-warning mt-3">
             Data untuk saham ini tidak dapat ditampilkan. Silakan coba cari kode saham yang lain.
         </div>
     @endif
@@ -132,40 +132,53 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Pastikan Chart.js sudah dimuat
     if (typeof Chart === 'undefined') {
         console.error('Chart.js tidak termuat.');
         return;
     }
 
-    const initialChartData = {!! json_encode($chartData ?? []) !!};
+    // Variabel dan elemen DOM
     const stockCode = '{{ $stockData["stock_code"] ?? "" }}';
-
-    if (!stockCode || initialChartData.length === 0) {
-        console.warn('Data saham atau data chart tidak tersedia, script chart tidak dijalankan.');
+    const chartCanvas = document.getElementById('stockChart');
+    
+    // Jangan jalankan script jika tidak ada canvas atau kode saham
+    if (!chartCanvas || !stockCode) {
+        console.warn('Data saham atau elemen canvas tidak tersedia, script chart tidak dijalankan.');
         return;
     }
 
-    const ctx = document.getElementById('stockChart').getContext('2d');
+    const ctx = chartCanvas.getContext('2d');
     const loadingOverlay = document.getElementById('loadingOverlay');
     let stockChart;
     let currentPeriod = '1y'; 
+    // Variabel untuk menyimpan data yang sedang aktif di chart, diinisialisasi dengan data dari PHP
+    let activeChartData = {!! json_encode($chartData ?? []) !!};
 
+    // Fungsi untuk memformat label tanggal di sumbu-X
     function formatChartLabels(labels, period) {
-        if (period === '1w' || period === '1m' || period === '3m' || period === '6m') {
+        if (period === '1w' || period === '1m') {
             return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
         }
-        if (period === '1y' || period === 'all') {
+        if (period === '3m' || period === '6m' || period === '1y' || period === 'all') {
             return labels.map(dateStr => new Date(dateStr).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
         }
         return labels;
     }
 
+    // Fungsi utama untuk merender atau mengupdate chart
     function renderChart(apiData, period) {
+        // Simpan data terbaru ke variabel global agar bisa diakses oleh tooltip
+        activeChartData = apiData;
+
         const dataPoints = apiData.map(item => item.Close);
         const originalLabels = apiData.map(item => item.Date);
         const formattedLabels = formatChartLabels(originalLabels, period);
 
-        if (stockChart) stockChart.destroy();
+        // Hancurkan chart lama jika ada sebelum membuat yang baru
+        if (stockChart) {
+            stockChart.destroy();
+        }
         
         stockChart = new Chart(ctx, {
             type: 'line',
@@ -176,20 +189,69 @@ document.addEventListener('DOMContentLoaded', function() {
                     data: dataPoints,
                     borderColor: '#16a34a',
                     backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                    borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.1,
+                    fill: true,
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
-                    x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
-                    y: { ticks: { callback: value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value) } }
+                    x: {
+                        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+                    },
+                    y: {
+                        ticks: {
+                            callback: value => 'Rp ' + new Intl.NumberFormat('id-ID').format(value)
+                        }
+                    }
                 },
+                // Konfigurasi tooltip kustom
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
+                        intersect: false,
+                        mode: 'index',
                         callbacks: {
-                            label: context => 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(context.parsed.y)
+                            title: function(context) {
+                                const dataIndex = context[0].dataIndex;
+                                // Ambil data lengkap dari variabel activeChartData
+                                const dataPoint = activeChartData[dataIndex];
+                                if (!dataPoint) return '';
+                                // Format tanggal sebagai judul tooltip
+                                return new Date(dataPoint.Date).toLocaleDateString('id-ID', {
+                                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                                });
+                            },
+                            label: function(context) {
+                                const dataPoint = activeChartData[context.dataIndex];
+                                if (!dataPoint) return '';
+                                const closePrice = dataPoint.Close || 0;
+                                // Format harga penutupan sebagai label utama
+                                return ` Tutup: Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(closePrice)}`;
+                            },
+                            afterLabel: function(context) {
+                                const dataPoint = activeChartData[context.dataIndex];
+                                if (!dataPoint) return '';
+                                // Ambil data lain dari dataPoint
+                                const open = dataPoint.Open || 0;
+                                const high = dataPoint.High || 0;
+                                const low = dataPoint.Low || 0;
+                                const volume = dataPoint.Volume || 0;
+                                
+                                // Format dan kembalikan sebagai array untuk baris-baris baru di tooltip
+                                let tooltipRows = [];
+                                tooltipRows.push(`  Buka:    Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(open)}`);
+                                tooltipRows.push(`  Tinggi:  Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(high)}`);
+                                tooltipRows.push(`  Rendah:  Rp ${new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(low)}`);
+                                tooltipRows.push(`  Volume:  ${new Intl.NumberFormat('id-ID').format(volume)}`);
+                                
+                                return tooltipRows;
+                            }
                         }
                     }
                 }
@@ -197,39 +259,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Fungsi untuk mengambil data baru via AJAX dan mengupdate chart
     function fetchAndUpdateChart(period) {
         currentPeriod = period;
-        loadingOverlay.style.display = 'flex';
+        loadingOverlay.style.display = 'flex'; // Tampilkan loading
+        
         fetch(`/ajax/chart-data/${stockCode}?period=${period}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(result => {
                 if (result.status === 'success' && result.data && result.data.length > 0) {
-                    renderChart(result.data, period);
+                    renderChart(result.data, period); // Render chart dengan data baru
                 } else {
                     console.error('Gagal memuat data chart baru:', result.message);
                     alert('Gagal memuat data untuk periode ini atau data tidak tersedia.');
                 }
             })
-            .catch(error => console.error('Error saat fetch data:', error))
+            .catch(error => {
+                console.error('Error saat fetch data:', error);
+                alert('Terjadi kesalahan saat mengambil data grafik.');
+            })
             .finally(() => {
-                loadingOverlay.style.display = 'none';
+                loadingOverlay.style.display = 'none'; // Sembunyikan loading
             });
     }
 
-    renderChart(initialChartData, currentPeriod);
+    // Render chart pertama kali saat halaman dimuat jika ada data
+    if (activeChartData && activeChartData.length > 0) {
+        renderChart(activeChartData, currentPeriod);
+    }
 
+    // Tambahkan event listener untuk setiap tab periode
     document.querySelectorAll('.chart-tabs .chart-tab').forEach(tab => {
         tab.addEventListener('click', function() {
+            // Hapus kelas 'active' dari semua tab, lalu tambahkan ke tab yang diklik
             document.querySelectorAll('.chart-tabs .chart-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
+            // Panggil fungsi untuk update chart
             fetchAndUpdateChart(this.dataset.period);
         });
     });
 
+    // Tambahkan event listener untuk form pencarian
     const searchForm = document.getElementById('stockSearchForm');
     searchForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const newStockCode = document.getElementById('stockSearchInput').value.trim().toUpperCase();
+        // Redirect ke URL yang sesuai, atau ke halaman utama jika input kosong
         window.location.href = newStockCode ? `/${newStockCode}` : '/';
     });
 });
