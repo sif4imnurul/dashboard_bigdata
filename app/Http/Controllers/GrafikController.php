@@ -25,8 +25,19 @@ class GrafikController extends Controller
         Log::info("Menampilkan dasbor untuk kode saham: " . $stock_code_to_fetch);
 
         $stockData = $this->getStockDetails($stock_code_to_fetch);
-        $chartData = $this->getChartDataForView($stock_code_to_fetch);
-        $newsData = $this->getNewsData($isDetailView, $stock_code_to_fetch);
+        
+        // Hanya panggil API lain jika data saham ditemukan
+        if (!empty($stockData)) {
+            $chartData = $this->getChartDataForView($stock_code_to_fetch);
+            $newsData = $this->getNewsData($isDetailView, $stock_code_to_fetch);
+        } else {
+            // Jika data saham tidak ada, set data lain sebagai array kosong
+            $chartData = [];
+            $newsData = [];
+            if ($isDetailView) { // Hanya tampilkan error jika user benar-benar mencari saham
+                session()->flash('error', "Data untuk saham {$stock_code_to_fetch} tidak ditemukan.");
+            }
+        }
 
         return view('dashboard', [
             'stockData' => $stockData,
@@ -43,50 +54,37 @@ class GrafikController extends Controller
      */
     private function getStockDetails($stock_code)
     {
-        // **FIX**: Memanggil endpoint yang benar dengan parameter yang benar
-        $response = Http::timeout(10)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '5d']);
+        try {
+            $response = Http::timeout(10)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '5d']);
 
-        if (!$response->successful() || empty($response->json()['data'])) {
-            Log::error("Gagal mengambil data detail untuk {$stock_code} dari endpoint /timeseries: " . $response->body());
-            session()->flash('error', "Data detail untuk saham {$stock_code} tidak ditemukan.");
+            if (!$response->successful() || empty($response->json()['data'])) {
+                Log::error("Gagal mengambil data detail untuk {$stock_code} dari API: " . $response->body());
+                return [];
+            }
+
+            $timeSeries = $response->json()['data'];
+            $latestData = end($timeSeries);
+            $previousData = count($timeSeries) > 1 ? $timeSeries[count($timeSeries) - 2] : $latestData;
+
+            $change = ($latestData['Close'] ?? 0) - ($previousData['Close'] ?? 0);
+            $changePercent = ($previousData['Close'] ?? 0) > 0 ? ($change / $previousData['Close']) * 100 : 0;
+
+            $companyName = $latestData['company_name'] ?? $stock_code;
+
+            return [
+                'stock_code' => $stock_code,
+                'name' => $companyName,
+                'current_price' => $latestData['Close'] ?? 0,
+                'change_percent' => $changePercent,
+                'volume' => $latestData['Volume'] ?? 0,
+                'day_high' => $latestData['High'] ?? 0,
+                'day_low' => $latestData['Low'] ?? 0,
+            ];
+        } catch (\Exception $e) {
+            Log::critical("Koneksi ke API saham gagal: " . $e->getMessage());
+            session()->flash('error', 'Tidak dapat terhubung ke server API. Mohon periksa apakah server API sudah berjalan.');
             return [];
         }
-
-        $timeSeries = $response->json()['data'];
-        $latestData = end($timeSeries);
-        $previousData = count($timeSeries) > 1 ? $timeSeries[count($timeSeries) - 2] : $latestData;
-
-        // Perhitungan persentase perubahan yang akurat
-        $change = ($latestData['Close'] ?? 0) - ($previousData['Close'] ?? 0);
-        $changePercent = ($previousData['Close'] ?? 0) > 0 ? ($change / $previousData['Close']) * 100 : 0;
-
-        // Mendapatkan nama perusahaan dari data, jika ada
-        $companyName = 'Nama Perusahaan Tidak Tersedia';
-        if (!empty($timeSeries)) {
-             // Coba cari field company_name di data terakhir
-            if (isset($latestData['company_name'])) {
-                $companyName = $latestData['company_name'];
-            } else {
-                // Jika tidak ada, coba ambil dari item pertama (fallback)
-                $firstData = $timeSeries[0];
-                if (isset($firstData['company_name'])) {
-                    $companyName = $firstData['company_name'];
-                } else {
-                    $companyName = $stock_code; // Default ke kode saham jika tidak ada sama sekali
-                }
-            }
-        }
-
-
-        return [
-            'stock_code' => $stock_code,
-            'name' => $companyName,
-            'current_price' => $latestData['Close'] ?? 0,
-            'change_percent' => $changePercent,
-            'volume' => $latestData['Volume'] ?? 0,
-            'day_high' => $latestData['High'] ?? 0,
-            'day_low' => $latestData['Low'] ?? 0,
-        ];
     }
 
     /**
@@ -95,11 +93,10 @@ class GrafikController extends Controller
      */
     private function getChartDataForView($stock_code)
     {
-        // **FIX**: Memanggil endpoint yang benar dengan parameter yang benar
         $response = Http::timeout(15)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '1y']);
 
         if (!$response->successful()) {
-            Log::error("Gagal mengambil data grafik untuk {$stock_code} dari endpoint /timeseries: " . $response->body());
+            Log::error("Gagal mengambil data grafik untuk {$stock_code} dari API: " . $response->body());
             return [];
         }
         return $response->json()['data'] ?? [];
@@ -107,7 +104,6 @@ class GrafikController extends Controller
 
     /**
      * Helper untuk mengambil data berita.
-     * (Fungsi ini tidak diubah)
      */
     private function getNewsData($isDetailView, $stock_code)
     {
@@ -120,13 +116,18 @@ class GrafikController extends Controller
         }
 
         $newsData = array_slice($response->json()['data'] ?? [], 0, 10);
+
+        // Tambahkan key baru 'formatted_date' untuk tampilan yang aman
         foreach ($newsData as &$item) {
             if (!empty($item['original_date'])) {
                 try {
-                    $item['original_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
+                    $item['formatted_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
                 } catch (\Exception $e) {
-                    $item['original_date'] = $item['original_date'];
+                    $item['formatted_date'] = $item['original_date']; // Fallback
+                    Log::warning("Gagal mem-parsing tanggal berita: " . $item['original_date']);
                 }
+            } else {
+                $item['formatted_date'] = 'Tanggal tidak tersedia';
             }
         }
         return $newsData;
@@ -138,48 +139,15 @@ class GrafikController extends Controller
      */
     public function getChartData(Request $request, $stock_code)
     {
-        // **FIX**: Menggunakan 'period' sebagai parameter, bukan 'range'
         $period = $request->input('period', '1y'); 
         
         $response = Http::timeout(15)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => $period]);
 
-        return $response->successful()
-            ? response()->json($response->json())
-            : response()->json(['status' => 'error', 'message' => 'Gagal mengambil data'], 500);
+        if (!$response->successful()) {
+            return response()->json(['status' => 'error', 'message' => 'Gagal mengambil data'], 500);
+        }
+        
+        // Pastikan untuk mengembalikan data dengan struktur yang diharapkan oleh frontend
+        return response()->json($response->json());
     }
 }
-
-/**
-     * Helper untuk mengambil data berita.
-     */
-    private function getNewsData($isDetailView, $stock_code)
-    {
-        // Parameter pencarian berdasarkan kode saham jika ini adalah halaman detail
-        $apiParams = $isDetailView ? ['search' => $stock_code] : [];
-        $response = Http::get("{$this->newsApiBaseUrl}/iqplus/news", $apiParams);
-
-        if (!$response->successful()) {
-            Log::error("Gagal mengambil data berita: " . $response->body());
-            return [];
-        }
-
-        // Ambil 10 berita teratas untuk ditampilkan di dasbor
-        $newsData = array_slice($response->json()['data'] ?? [], 0, 10);
-
-        // Tambahkan key baru 'formatted_date' untuk tampilan, tanpa mengubah data asli
-        foreach ($newsData as &$item) {
-            if (!empty($item['original_date'])) {
-                try {
-                    // Gunakan Carbon::parse() yang lebih fleksibel terhadap berbagai format tanggal
-                    $item['formatted_date'] = Carbon::parse($item['original_date'])->locale('id')->translatedFormat('l, d F Y H:i');
-                } catch (\Exception $e) {
-                    // Jika gagal parsing, gunakan tanggal asli sebagai fallback
-                    $item['formatted_date'] = $item['original_date'];
-                    Log::warning("Gagal mem-parsing tanggal berita: " . $item['original_date']);
-                }
-            } else {
-                 $item['formatted_date'] = 'Tanggal tidak tersedia';
-            }
-        }
-        return $newsData;
-    }
