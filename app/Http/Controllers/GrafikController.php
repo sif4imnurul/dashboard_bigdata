@@ -9,20 +9,16 @@ use Carbon\Carbon;
 
 class GrafikController extends Controller
 {
-    /**
-     * Alamat dasar dari API Flask Anda.
-     */
     private $apiBaseUrl = 'http://localhost:5000/api';
 
     /**
      * Menampilkan halaman dashboard utama yang dinamis.
      *
-     * @param string|null $stock_code Kode saham dari URL, default ke 'BBCA'.
+     * @param string|null $stock_code
      * @return \Illuminate\View\View
      */
     public function index($stock_code = null)
     {
-        // Tentukan apakah ini halaman detail atau dashboard umum
         $isDetailView = $stock_code !== null;
         $stock_code_to_fetch = strtoupper($stock_code ?? 'BBCA');
 
@@ -37,16 +33,17 @@ class GrafikController extends Controller
             'chartData' => $chartData,
             'news' => $newsData,
             'isDetailView' => $isDetailView,
-            'searchStockCode' => $stock_code, // Gunakan stock_code asli dari URL untuk nilai form
+            'searchStockCode' => $stock_code,
         ]);
     }
 
     /**
-     * Helper function untuk mengambil detail saham.
+     * Helper untuk mengambil detail saham dan menghitung perubahan.
      */
     private function getStockDetails($stock_code)
     {
-        $response = Http::timeout(10)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '1w']);
+        // Ambil data 2 hari terakhir untuk bisa menghitung perubahan dari hari sebelumnya
+        $response = Http::timeout(10)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '5d']);
 
         if (!$response->successful() || empty($response->json()['data'])) {
             Log::error("Gagal mengambil data detail untuk {$stock_code}: " . $response->body());
@@ -54,12 +51,20 @@ class GrafikController extends Controller
             return [];
         }
 
-        $latestData = end($response->json()['data']);
+        $timeSeries = $response->json()['data'];
+        $latestData = end($timeSeries);
+        // Ambil data hari sebelumnya untuk perbandingan
+        $previousData = count($timeSeries) > 1 ? $timeSeries[count($timeSeries) - 2] : $latestData;
+
+        // PERBAIKAN: Perhitungan persentase perubahan yang akurat
+        $change = ($latestData['Close'] ?? 0) - ($previousData['Close'] ?? 0);
+        $changePercent = ($previousData['Close'] ?? 0) > 0 ? ($change / $previousData['Close']) * 100 : 0;
+
         return [
             'stock_code' => $stock_code,
             'name' => $latestData['company_name'] ?? $stock_code,
             'current_price' => $latestData['Close'] ?? 0,
-            'change_percent' => ($latestData['Close'] > $latestData['Open']) ? 1.5 : -1.5,
+            'change_percent' => $changePercent,
             'volume' => $latestData['Volume'] ?? 0,
             'day_high' => $latestData['High'] ?? 0,
             'day_low' => $latestData['Low'] ?? 0,
@@ -67,7 +72,7 @@ class GrafikController extends Controller
     }
 
     /**
-     * Helper function untuk mengambil data grafik.
+     * Helper untuk mengambil data grafik.
      */
     private function getChartDataForView($stock_code)
     {
@@ -81,7 +86,7 @@ class GrafikController extends Controller
     }
 
     /**
-     * Helper function untuk mengambil data berita.
+     * Helper untuk mengambil data berita.
      */
     private function getNewsData($isDetailView, $stock_code)
     {
@@ -107,8 +112,7 @@ class GrafikController extends Controller
     }
 
     /**
-     * Endpoint untuk dipanggil oleh AJAX dari halaman dasbor.
-     * Mengambil data chart untuk periode tertentu.
+     * Endpoint AJAX untuk mengambil data chart berdasarkan periode.
      */
     public function getChartData(Request $request, $stock_code)
     {
