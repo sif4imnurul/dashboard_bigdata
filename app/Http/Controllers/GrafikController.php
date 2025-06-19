@@ -24,7 +24,6 @@ class GrafikController extends Controller
 
         Log::info("Menampilkan dasbor untuk kode saham: " . $stock_code_to_fetch);
 
-        // Mengambil data dari controller yang sudah diperbaiki
         $stockData = $this->getStockDetails($stock_code_to_fetch);
         $chartData = $this->getChartDataForView($stock_code_to_fetch);
         $newsData = $this->getNewsData($isDetailView, $stock_code_to_fetch);
@@ -40,16 +39,15 @@ class GrafikController extends Controller
 
     /**
      * Helper untuk mengambil detail saham dan menghitung perubahan.
-     * SELALU mengambil dari data harian.
+     * Menggunakan endpoint /timeseries sesuai app.py
      */
     private function getStockDetails($stock_code)
     {
-        // **PERUBAHAN ENDPOINT**: Meminta data spesifik dari koleksi 'daily'.
-        // Parameter 'range' diasumsikan untuk membatasi jumlah data yang diambil oleh API.
-        $response = Http::timeout(10)->get("{$this->apiBaseUrl}/stock/{$stock_code}/daily", ['range' => '5d']);
+        // **FIX**: Memanggil endpoint yang benar dengan parameter yang benar
+        $response = Http::timeout(10)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '5d']);
 
         if (!$response->successful() || empty($response->json()['data'])) {
-            Log::error("Gagal mengambil data detail untuk {$stock_code} dari endpoint /daily: " . $response->body());
+            Log::error("Gagal mengambil data detail untuk {$stock_code} dari endpoint /timeseries: " . $response->body());
             session()->flash('error', "Data detail untuk saham {$stock_code} tidak ditemukan.");
             return [];
         }
@@ -62,9 +60,27 @@ class GrafikController extends Controller
         $change = ($latestData['Close'] ?? 0) - ($previousData['Close'] ?? 0);
         $changePercent = ($previousData['Close'] ?? 0) > 0 ? ($change / $previousData['Close']) * 100 : 0;
 
+        // Mendapatkan nama perusahaan dari data, jika ada
+        $companyName = 'Nama Perusahaan Tidak Tersedia';
+        if (!empty($timeSeries)) {
+             // Coba cari field company_name di data terakhir
+            if (isset($latestData['company_name'])) {
+                $companyName = $latestData['company_name'];
+            } else {
+                // Jika tidak ada, coba ambil dari item pertama (fallback)
+                $firstData = $timeSeries[0];
+                if (isset($firstData['company_name'])) {
+                    $companyName = $firstData['company_name'];
+                } else {
+                    $companyName = $stock_code; // Default ke kode saham jika tidak ada sama sekali
+                }
+            }
+        }
+
+
         return [
             'stock_code' => $stock_code,
-            'name' => $latestData['company_name'] ?? $stock_code,
+            'name' => $companyName,
             'current_price' => $latestData['Close'] ?? 0,
             'change_percent' => $changePercent,
             'volume' => $latestData['Volume'] ?? 0,
@@ -75,15 +91,15 @@ class GrafikController extends Controller
 
     /**
      * Helper untuk mengambil data grafik untuk tampilan awal.
-     * SELALU mengambil dari data harian.
+     * Menggunakan endpoint /timeseries sesuai app.py
      */
     private function getChartDataForView($stock_code)
     {
-        // **PERUBAHAN ENDPOINT**: Meminta data harian untuk rentang 1 tahun
-        $response = Http::timeout(15)->get("{$this->apiBaseUrl}/stock/{$stock_code}/daily", ['range' => '1y']);
+        // **FIX**: Memanggil endpoint yang benar dengan parameter yang benar
+        $response = Http::timeout(15)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => '1y']);
 
         if (!$response->successful()) {
-            Log::error("Gagal mengambil data grafik untuk {$stock_code} dari endpoint /daily: " . $response->body());
+            Log::error("Gagal mengambil data grafik untuk {$stock_code} dari endpoint /timeseries: " . $response->body());
             return [];
         }
         return $response->json()['data'] ?? [];
@@ -118,14 +134,14 @@ class GrafikController extends Controller
 
     /**
      * Endpoint AJAX untuk mengambil data chart berdasarkan periode.
-     * SELALU mengambil dari data harian dengan rentang tertentu.
+     * Menggunakan endpoint /timeseries sesuai app.py
      */
     public function getChartData(Request $request, $stock_code)
     {
-        $period = $request->input('period', '1y'); // '1w', '1m', '1y', dll.
+        // **FIX**: Menggunakan 'period' sebagai parameter, bukan 'range'
+        $period = $request->input('period', '1y'); 
         
-        // **PERUBAHAN ENDPOINT**: Meminta data harian dengan rentang yang diminta dari frontend
-        $response = Http::timeout(15)->get("{$this->apiBaseUrl}/stock/{$stock_code}/daily", ['range' => $period]);
+        $response = Http::timeout(15)->get("{$this->apiBaseUrl}/stock/{$stock_code}/timeseries", ['period' => $period]);
 
         return $response->successful()
             ? response()->json($response->json())
